@@ -16,6 +16,8 @@ import aiRoutes from './modules/ai.js';
 import inventoryRoutes from './modules/inventory.js';
 import crmRoutes from './modules/crm.js';
 import procurementRoutes from './modules/procurement.js';
+import projectsRoutes from './modules/projects.js';
+import qualityRoutes from './modules/quality.js';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
@@ -43,6 +45,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/crm', crmRoutes);
 app.use('/api/procurement', procurementRoutes);
+app.use('/api/projects', projectsRoutes);
+app.use('/api/quality', qualityRoutes);
 
 // 404 for unknown API routes
 app.use('/api', (_req, res) => {

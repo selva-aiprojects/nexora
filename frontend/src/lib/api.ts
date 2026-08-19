@@ -954,6 +954,103 @@ export interface ProcurementGRN {
   status: string;
 }
 
+export interface Project {
+  id: string;
+  tenantId: string;
+  name: string;
+  code: string;
+  description: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  budget: number;
+  managerId: string;
+  createdAt: string;
+}
+
+export interface ProjectWbs {
+  id: string;
+  tenantId: string;
+  projectId: string;
+  name: string;
+  description: string;
+  parentId: string | null;
+  startDate: string;
+  endDate: string;
+  budget: number;
+  status: string;
+}
+
+export interface ProjectTimeEntry {
+  id: string;
+  tenantId: string;
+  projectId: string;
+  wbsId: string | null;
+  employeeId: string;
+  date: string;
+  hours: number;
+  description: string;
+  billable: boolean;
+  createdAt: string;
+}
+
+export interface ProjectBudget {
+  id: string;
+  tenantId: string;
+  projectId: string;
+  category: string;
+  amount: number;
+  spent: number;
+  period: string;
+  createdAt: string;
+}
+
+export interface ProjectPlRow {
+  projectId: string;
+  name: string;
+  revenue: number;
+  cost: number;
+  profit: number;
+  wbsCount: number;
+  timeEntries: number;
+}
+
+export interface QCInspectionPlan {
+  id: string;
+  tenantId: string;
+  name: string;
+  itemId: string;
+  type: string;
+  frequency: string;
+  criteria: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface QCCheck {
+  id: string;
+  tenantId: string;
+  planId: string;
+  batchId: string;
+  inspectorId: string;
+  date: string;
+  result: string;
+  remarks: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface QCNonConformance {
+  id: string;
+  tenantId: string;
+  checkId: string;
+  description: string;
+  severity: string;
+  correctiveAction: string;
+  status: string;
+  createdAt: string;
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<LoginResponse>('/auth/login', {
@@ -1621,6 +1718,151 @@ export const api = {
 
   updateProcurementGRN: (id: string, body: Partial<ProcurementGRN>) =>
     request<ProcurementGRN>(`/procurement/grns/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  getProjects: (params?: { status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    const q = qs.toString();
+    return request<ListResult<Project>>(`/projects/projects${q ? `?${q}` : ''}`);
+  },
+
+  getProject: (id: string) => request<Project>(`/projects/projects/${encodeURIComponent(id)}`),
+
+  createProject: (body: { name: string; code: string; description?: string; status?: string; startDate: string; endDate: string; budget: number; managerId?: string }) =>
+    request<Project>('/projects/projects', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateProject: (id: string, body: Partial<Project>) =>
+    request<Project>(`/projects/projects/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  deleteProject: (id: string) =>
+    request<void>(`/projects/projects/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+
+  getWbs: (params?: { projectId?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.projectId) qs.set('projectId', params.projectId);
+    const q = qs.toString();
+    return request<ListResult<ProjectWbs>>(`/projects/wbs${q ? `?${q}` : ''}`);
+  },
+
+  createWbs: (body: { projectId: string; name: string; description?: string; parentId?: string | null; startDate: string; endDate: string; budget: number; status?: string }) =>
+    request<ProjectWbs>('/projects/wbs', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateWbs: (id: string, body: Partial<ProjectWbs>) =>
+    request<ProjectWbs>(`/projects/wbs/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  getTimeEntries: (params?: { projectId?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.projectId) qs.set('projectId', params.projectId);
+    const q = qs.toString();
+    return request<ListResult<ProjectTimeEntry>>(`/projects/time-entries${q ? `?${q}` : ''}`);
+  },
+
+  createTimeEntry: (body: { projectId: string; wbsId?: string | null; employeeId: string; date: string; hours: number; description?: string; billable?: boolean }) =>
+    request<ProjectTimeEntry>('/projects/time-entries', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  getProjectBudgets: (params?: { projectId?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.projectId) qs.set('projectId', params.projectId);
+    const q = qs.toString();
+    return request<ListResult<ProjectBudget>>(`/projects/budgets${q ? `?${q}` : ''}`);
+  },
+
+  createProjectBudget: (body: { projectId: string; category: string; amount: number; period: string }) =>
+    request<ProjectBudget>('/projects/budgets', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  getProjectPl: (params?: { projectId?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.projectId) qs.set('projectId', params.projectId);
+    const q = qs.toString();
+    return request<ListResult<ProjectPlRow>>(`/projects/reports/project-pl${q ? `?${q}` : ''}`);
+  },
+
+  getQCInspectionPlans: (params?: { status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    const q = qs.toString();
+    return request<ListResult<QCInspectionPlan>>(`/quality/inspection-plans${q ? `?${q}` : ''}`);
+  },
+
+  getQCInspectionPlan: (id: string) => request<QCInspectionPlan>(`/quality/inspection-plans/${encodeURIComponent(id)}`),
+
+  createQCInspectionPlan: (body: { name: string; itemId: string; type: string; frequency: string; criteria?: string; status?: string }) =>
+    request<QCInspectionPlan>('/quality/inspection-plans', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateQCInspectionPlan: (id: string, body: Partial<QCInspectionPlan>) =>
+    request<QCInspectionPlan>(`/quality/inspection-plans/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  deleteQCInspectionPlan: (id: string) =>
+    request<void>(`/quality/inspection-plans/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+
+  getQCChecks: (params?: { planId?: string; status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.planId) qs.set('planId', params.planId);
+    if (params?.status) qs.set('status', params.status);
+    const q = qs.toString();
+    return request<ListResult<QCCheck>>(`/quality/checks${q ? `?${q}` : ''}`);
+  },
+
+  createQCCheck: (body: { planId: string; batchId?: string; inspectorId: string; date: string; result?: string; remarks?: string; status?: string }) =>
+    request<QCCheck>('/quality/checks', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateQCCheck: (id: string, body: Partial<QCCheck>) =>
+    request<QCCheck>(`/quality/checks/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  getQCNonConformances: (params?: { checkId?: string; status?: string; severity?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.checkId) qs.set('checkId', params.checkId);
+    if (params?.status) qs.set('status', params.status);
+    if (params?.severity) qs.set('severity', params.severity);
+    const q = qs.toString();
+    return request<ListResult<QCNonConformance>>(`/quality/non-conformances${q ? `?${q}` : ''}`);
+  },
+
+  createQCNonConformance: (body: { checkId: string; description: string; severity: string; correctiveAction?: string; status?: string }) =>
+    request<QCNonConformance>('/quality/non-conformances', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateQCNonConformance: (id: string, body: Partial<QCNonConformance>) =>
+    request<QCNonConformance>(`/quality/non-conformances/${encodeURIComponent(id)}`, {
       method: 'PUT',
       body: JSON.stringify(body),
     }),

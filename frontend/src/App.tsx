@@ -66,6 +66,14 @@ import ProcurementVendorsPage from '@/pages/procurement/Vendors';
 import ProcurementVendorQuotesPage from '@/pages/procurement/VendorQuotes';
 import ProcurementContractsPage from '@/pages/procurement/Contracts';
 import ProcurementGRNsPage from '@/pages/procurement/GRNs';
+import ProjectsPage from '@/pages/projects/Projects';
+import WBSItemsPage from '@/pages/projects/WBS';
+import ProjectTimeEntriesPage from '@/pages/projects/TimeEntries';
+import ProjectBudgetsPage from '@/pages/projects/Budgets';
+import ProjectReportsPage from '@/pages/projects/Reports';
+import InspectionPlansPage from '@/pages/quality/InspectionPlans';
+import QCChecksPage from '@/pages/quality/Checks';
+import NonConformancesPage from '@/pages/quality/NonConformances';
 
 interface Invoice {
   id: string;
@@ -194,6 +202,24 @@ function useActiveNav() {
         { label: 'Vendor Quotes', to: '/procurement/vendor-quotes', active: isActive('/procurement/vendor-quotes') },
         { label: 'Contracts', to: '/procurement/contracts', active: isActive('/procurement/contracts') },
         { label: 'GRNs', to: '/procurement/grns', active: isActive('/procurement/grns') },
+      ],
+    },
+    {
+      title: 'Projects',
+      items: [
+        { label: 'Projects', to: '/projects', active: isActive('/projects') },
+        { label: 'WBS', to: '/projects/wbs', active: isActive('/projects/wbs') },
+        { label: 'Time Entries', to: '/projects/time-entries', active: isActive('/projects/time-entries') },
+        { label: 'Budgets', to: '/projects/budgets', active: isActive('/projects/budgets') },
+        { label: 'Reports', to: '/projects/reports', active: isActive('/projects/reports') },
+      ],
+    },
+    {
+      title: 'Quality',
+      items: [
+        { label: 'Inspection Plans', to: '/quality/inspection-plans', active: isActive('/quality/inspection-plans') },
+        { label: 'QC Checks', to: '/quality/checks', active: isActive('/quality/checks') },
+        { label: 'Non-Conformances', to: '/quality/non-conformances', active: isActive('/quality/non-conformances') },
       ],
     },
   ];
@@ -536,6 +562,14 @@ function App() {
         <Route path="/procurement/vendor-quotes" element={<ProcurementVendorQuotesPage />} />
         <Route path="/procurement/contracts" element={<ProcurementContractsPage />} />
         <Route path="/procurement/grns" element={<ProcurementGRNsPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/projects/wbs" element={<WBSItemsPage />} />
+        <Route path="/projects/time-entries" element={<ProjectTimeEntriesPage />} />
+        <Route path="/projects/budgets" element={<ProjectBudgetsPage />} />
+        <Route path="/projects/reports" element={<ProjectReportsPage />} />
+        <Route path="/quality/inspection-plans" element={<InspectionPlansPage />} />
+        <Route path="/quality/checks" element={<QCChecksPage />} />
+        <Route path="/quality/non-conformances" element={<NonConformancesPage />} />
       </Routes>
     </AppShell>
   );

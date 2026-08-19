@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nexora UI — Live Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root{
+    --nx-ink:11 18 32; --nx-ink-muted:91 100 114; --nx-canvas:247 248 250; --nx-surface:255 255 255;
+    --nx-border:226 229 234; --nx-border-strong:203 208 217;
+    --nx-primary:53 71 230; --nx-primary-hover:44 58 203; --nx-primary-subtle:237 239 253;
+    --nx-accent:124 92 252; --nx-accent-subtle:240 237 254;
+    --nx-success:23 166 115; --nx-success-subtle:227 246 239;
+    --nx-warning:226 160 63; --nx-warning-subtle:252 242 227;
+    --nx-danger:229 72 77; --nx-danger-subtle:253 231 231;
+    --nx-info:47 143 224; --nx-info-subtle:227 241 253;
+  }
+  body{font-family:'Inter',system-ui,sans-serif;background:rgb(var(--nx-canvas));}
+  .font-display{font-family:'Manrope','Inter',sans-serif;}
+  .font-mono{font-family:'JetBrains Mono',ui-monospace,monospace;}
+  ::selection{background:rgb(var(--nx-primary-subtle));}
+</style>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: 'rgb(var(--nx-ink) / <alpha-value>)',
+          'ink-muted': 'rgb(var(--nx-ink-muted) / <alpha-value>)',
+          canvas: 'rgb(var(--nx-canvas) / <alpha-value>)',
+          surface: 'rgb(var(--nx-surface) / <alpha-value>)',
+          border: 'rgb(var(--nx-border) / <alpha-value>)',
+          'border-strong': 'rgb(var(--nx-border-strong) / <alpha-value>)',
+          primary: { DEFAULT: 'rgb(var(--nx-primary) / <alpha-value>)', hover: 'rgb(var(--nx-primary-hover) / <alpha-value>)', subtle: 'rgb(var(--nx-primary-subtle) / <alpha-value>)' },
+          accent: { DEFAULT: 'rgb(var(--nx-accent) / <alpha-value>)', subtle: 'rgb(var(--nx-accent-subtle) / <alpha-value>)' },
+          success: { DEFAULT: 'rgb(var(--nx-success) / <alpha-value>)', subtle: 'rgb(var(--nx-success-subtle) / <alpha-value>)' },
+          warning: { DEFAULT: 'rgb(var(--nx-warning) / <alpha-value>)', subtle: 'rgb(var(--nx-warning-subtle) / <alpha-value>)' },
+          danger: { DEFAULT: 'rgb(var(--nx-danger) / <alpha-value>)', subtle: 'rgb(var(--nx-danger-subtle) / <alpha-value>)' },
+          info: { DEFAULT: 'rgb(var(--nx-info) / <alpha-value>)', subtle: 'rgb(var(--nx-info-subtle) / <alpha-value>)' },
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo, useRef, useEffect, useId } = React;
+
+function cn(...a){ return a.filter(Boolean).join(' '); }
+function formatINR(v, compact){
+  return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits: compact?1:2, notation: compact?'compact':'standard' }).format(v);
+}
+function formatDate(v){
+  return new Intl.DateTimeFormat('en-IN', { day:'2-digit', month:'short', year:'numeric' }).format(new Date(v));
+}
+
+/* ---------- Button ---------- */
+function Spinner({className}){
+  return (<svg className={cn('animate-spin', className)} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+    <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+  </svg>);
+}
+const VARIANT = {
+  primary: 'bg-primary text-white hover:bg-primary-hover disabled:bg-primary/40',
+  secondary: 'bg-surface text-ink border border-border-strong hover:bg-canvas disabled:text-ink-muted/50',
+  ghost: 'bg-transparent text-ink hover:bg-canvas disabled:text-ink-muted/50',
+  danger: 'bg-danger text-white hover:bg-danger/90 disabled:bg-danger/40',
+  ai: 'bg-accent text-white hover:bg-accent/90 disabled:bg-accent/40',
+};
+const SIZE = { sm:'h-8 px-3 text-sm gap-1.5', md:'h-10 px-4 text-sm gap-2', lg:'h-12 px-6 text-base gap-2' };
+function Button({variant='primary', size='md', isLoading, loadingLabel='Loading', className, children, ...props}){
+  return (
+    <button type={props.type||'button'} disabled={props.disabled||isLoading} aria-busy={isLoading||undefined}
+      className={cn('inline-flex items-center justify-center rounded-md font-medium transition-colors duration-150',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+        'disabled:cursor-not-allowed', VARIANT[variant], SIZE[size], className)} {...props}>
+      {isLoading ? (<><Spinner className="h-4 w-4"/><span className="sr-only">{loadingLabel}</span><span aria-hidden="true">{children}</span></>)
+        : children}
+    </button>
+  );
+}
+
+/* ---------- Badge ---------- */
+const TONE = {
+  neutral:'bg-canvas text-ink-muted border-border-strong',
+  success:'bg-success-subtle text-success border-transparent',
+  warning:'bg-warning-subtle text-warning border-transparent',
+  danger:'bg-danger-subtle text-danger border-transparent',
+  info:'bg-info-subtle text-info border-transparent',
+  ai:'bg-accent-subtle text-accent border-transparent',
+};
+const DOT = { neutral:'bg-ink-muted', success:'bg-success', warning:'bg-warning', danger:'bg-danger', info:'bg-info', ai:'bg-accent' };
+function Badge({tone='neutral', withDot, className, children}){
+  return (<span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium leading-5', TONE[tone], className)}>
+    {withDot && <span aria-hidden="true" className={cn('h-1.5 w-1.5 rounded-full', DOT[tone])}/>}
+    {children}
+  </span>);
+}
+
+/* ---------- Card / StatCard / InsightCard ---------- */
+function Card({padding='md', className, children}){
+  const P = { none:'', sm:'p-3', md:'p-5', lg:'p-8' };
+  return <div className={cn('rounded-xl border border-border bg-surface shadow-sm', P[padding], className)}>{children}</div>;
+}
+function StatCard({label, value, delta, trend, icon, isLoading, className}){
+  if (isLoading) return (<Card className={className}><div className="animate-pulse space-y-3">
+    <div className="h-3.5 w-24 rounded bg-canvas"/><div className="h-7 w-32 rounded bg-canvas"/><div className="h-3 w-20 rounded bg-canvas"/>
+  </div></Card>);
+  const trendClass = trend==='up' ? 'text-success' : trend==='down' ? 'text-danger' : 'text-ink-muted';
+  return (<Card className={className}>
+    <div className="flex items-start justify-between">
+      <span className="text-sm font-medium text-ink-muted">{label}</span>
+      {icon && <span className="text-ink-muted" aria-hidden="true">{icon}</span>}
+    </div>
+    <div className="mt-2 font-display text-2xl font-bold tabular-nums text-ink font-mono">{value}</div>
+    {delta && <div className={cn('mt-1 text-xs font-medium', trendClass)}>{delta}</div>}
+  </Card>);
+}
+function AiGlyph({className}){
+  return (<svg viewBox="0 0 16 16" fill="currentColor" className={className} aria-hidden="true"><path d="M8 0l1.6 5.2L15 8l-5.4 1.6L8 15l-1.5-5.4L1 8l5.5-1.8L8 0z"/></svg>);
+}
+function InsightCard({title, children, action, className}){
+  return (<Card className={cn('border-l-4 border-l-accent', className)}>
+    <div className="flex items-center gap-2"><AiGlyph className="h-4 w-4 text-accent"/><h3 className="font-display text-sm font-bold text-ink">{title}</h3></div>
+    <div className="mt-2 text-sm text-ink-muted">{children}</div>
+    {action && <div className="mt-3">{action}</div>}
+  </Card>);
+}
+
+/* ---------- EmptyState ---------- */
+function EmptyState({icon, title, description, action, variant='default', className}){
+  return (<div role={variant==='error'?'alert':undefined}
+    className={cn('flex flex-col items-center justify-center rounded-xl border border-dashed border-border-strong px-6 py-12 text-center',
+      variant==='error' && 'border-danger/30 bg-danger-subtle/40', className)}>
+    {icon && <div className={cn('mb-3 flex h-12 w-12 items-center justify-center rounded-full', variant==='error'?'bg-danger-subtle text-danger':'bg-canvas text-ink-muted')} aria-hidden="true">{icon}</div>}
+    <h3 className="font-display text-sm font-bold text-ink">{title}</h3>
+    {description && <p className="mt-1 max-w-sm text-sm text-ink-muted">{description}</p>}
+    {action && <div className="mt-4">{action}</div>}
+  </div>);
+}
+
+/* ---------- Form primitives ---------- */
+const fieldBase = 'block w-full rounded-md border bg-surface px-3 h-10 text-sm text-ink placeholder:text-ink-muted/70 transition-colors focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-canvas disabled:text-ink-muted';
+function FormField({label, htmlFor, required, error, help, children}){
+  return (<div className="space-y-1.5">
+    <label htmlFor={htmlFor} className="block text-sm font-medium text-ink">{label}{required && <span className="ml-0.5 text-danger" aria-hidden="true">*</span>}</label>
+    {React.isValidElement(children) ? React.cloneElement(children, { id: htmlFor, 'aria-invalid': !!error||undefined }) : children}
+    {help && !error && <p className="text-xs text-ink-muted">{help}</p>}
+    {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
+  </div>);
+}
+function TextField({className, invalid, ...props}){
+  return <input className={cn(fieldBase, (props['aria-invalid']||invalid) ? 'border-danger' : 'border-border-strong', className)} {...props} />;
+}
+function Select({options, placeholder, className, invalid, ...props}){
+  return (<select className={cn(fieldBase, 'pr-8', (props['aria-invalid']||invalid)?'border-danger':'border-border-strong', className)} {...props}>
+    {placeholder && <option value="" disabled hidden>{placeholder}</option>}
+    {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+  </select>);
+}
+
+/* ---------- Skeleton ---------- */
+function Skeleton({className}){ return <div aria-hidden="true" className={cn('animate-pulse rounded bg-canvas', className)}/>; }
+function SkeletonTableRows({rows=5, columns=5}){
+  return (<tbody aria-hidden="true">{Array.from({length:rows}).map((_,r)=>(
+    <tr key={r} className="border-b border-border">{Array.from({length:columns}).map((__,c)=>(
+      <td key={c} className="px-4 py-3"><Skeleton className="h-4 w-full"/></td>))}</tr>))}</tbody>);
+}
+
+/* ---------- DataTable ---------- */
+function SortIcon({direction}){
+  return (<svg viewBox="0 0 12 12" className="h-3 w-3 shrink-0" aria-hidden="true">
+    <path d="M6 2l3 4H3l3-4z" fill="currentColor" opacity={direction==='asc'?1:0.3}/>
+    <path d="M6 10l-3-4h6l-3 4z" fill="currentColor" opacity={direction==='desc'?1:0.3}/>
+  </svg>);
+}
+function TablePagination({page, pageSize, total, onPageChange}){
+  const totalPages = Math.max(1, Math.ceil(total/pageSize));
+  const start = (page-1)*pageSize+1, end = Math.min(page*pageSize, total);
+  return (<div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-ink-muted">
+    <span aria-live="polite">Showing {start}–{end} of {total}</span>
+    <nav aria-label="Table pagination" className="flex items-center gap-2">
+      <Button variant="secondary" size="sm" onClick={()=>onPageChange(page-1)} disabled={page<=1}>Previous</Button>
+      <span aria-hidden="true" className="tabular-nums font-mono">{page} / {totalPages}</span>
+      <Button variant="secondary" size="sm" onClick={()=>onPageChange(page+1)} disabled={page>=totalPages}>Next</Button>
+    </nav>
+  </div>);
+}
+function DataTable({columns, data, getRowId, isLoading, error, onRetry, emptyTitle='No records yet', emptyDescription, emptyAction, sortKey, sortDirection='asc', onSortChange, pagination, caption}){
+  const showEmpty = !isLoading && !error && data.length===0;
+  return (<div className="overflow-hidden rounded-xl border border-border bg-surface">
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm" aria-busy={isLoading||undefined}>
+        <caption className="sr-only">{caption}</caption>
+        <thead><tr className="border-b border-border bg-canvas/60">
+          {columns.map(col=>{
+            const isSorted = sortKey===col.key;
+            return (<th key={col.key} scope="col" aria-sort={isSorted?(sortDirection==='asc'?'ascending':'descending'):undefined}
+              className={cn('px-4 py-3 font-semibold text-ink-muted', col.align==='right'&&'text-right', col.hideBelow==='md'&&'hidden md:table-cell')}>
+              {col.sortable ? (
+                <button type="button" onClick={()=>onSortChange && onSortChange(col.key, (sortKey===col.key && sortDirection==='asc')?'desc':'asc')}
+                  className="inline-flex items-center gap-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  {col.header}<SortIcon direction={isSorted?sortDirection:undefined}/>
+                </button>) : col.header}
+            </th>);
+          })}
+        </tr></thead>
+        {isLoading ? <SkeletonTableRows rows={pagination?.pageSize ?? 6} columns={columns.length} /> : (
+          <tbody>{data.map(row=>{
+            const id = getRowId(row);
+            return (<tr key={id} className="border-b border-border last:border-0 hover:bg-canvas/60">
+              {columns.map(col=>(
+                <td key={col.key} className={cn('px-4 py-3 text-ink', col.align==='right'&&'text-right tabular-nums font-mono', col.hideBelow==='md'&&'hidden md:table-cell')}>
+                  {col.render ? col.render(row) : String(row[col.key] ?? '—')}
+                </td>))}
+            </tr>);
+          })}</tbody>
+        )}
+      </table>
+    </div>
+    {showEmpty && <EmptyState className="border-0" title={emptyTitle} description={emptyDescription} action={emptyAction}/>}
+    {!isLoading && error && <EmptyState className="border-0" variant="error" title="Couldn't load this data" description={error} action={onRetry && <Button variant="secondary" size="sm" onClick={onRetry}>Retry</Button>}/>}
+    {pagination && !isLoading && !error && data.length>0 && <TablePagination {...pagination}/>}
+  </div>);
+}
+
+/* ---------- Modal ---------- */
+function Modal({open, onClose, title, description, children, footer, size='md'}){
+  const ref = useRef(null);
+  const SIZES = { sm:'max-w-sm', md:'max-w-lg', lg:'max-w-2xl' };
+  useEffect(()=>{
+    if(!open) return;
+    document.body.style.overflow='hidden';
+    ref.current?.focus();
+    function onKey(e){ if(e.key==='Escape') onClose(); }
+    document.addEventListener('keydown', onKey);
+    return ()=>{ document.removeEventListener('keydown', onKey); document.body.style.overflow=''; };
+  },[open]);
+  if(!open) return null;
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-ink/50" aria-hidden="true" onClick={onClose}/>
+      <div ref={ref} role="dialog" aria-modal="true" tabIndex={-1} className={cn('relative z-10 w-full rounded-2xl bg-surface shadow-2xl focus:outline-none', SIZES[size])}>
+        <div className="flex items-start justify-between border-b border-border px-6 py-4">
+          <div><h2 className="font-display text-base font-bold text-ink">{title}</h2>{description && <p className="mt-0.5 text-sm text-ink-muted">{description}</p>}</div>
+          <button type="button" onClick={onClose} aria-label="Close dialog" className="rounded p-1 text-ink-muted hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+        <div className="max-h-[65vh] overflow-y-auto px-6 py-5">{children}</div>
+        {footer && <div className="flex justify-end gap-2 border-t border-border px-6 py-4">{footer}</div>}
+      </div>
+    </div>, document.body);
+}
+
+/* ---------- Toast ---------- */
+const ToastCtx = React.createContext(null);
+function ToastProvider({children}){
+  const [toasts, setToasts] = useState([]);
+  const notify = (t)=>{ const id = Math.random().toString(36).slice(2); setToasts(p=>[...p,{...t,id}]); setTimeout(()=>setToasts(p=>p.filter(x=>x.id!==id)), 4000); };
+  const TONE_BORDER = { success:'border-l-success', danger:'border-l-danger', warning:'border-l-warning', info:'border-l-info' };
+  return (<ToastCtx.Provider value={{notify}}>
+    {children}
+    {ReactDOM.createPortal(
+      <div aria-live="polite" className="fixed bottom-4 right-4 z-[60] flex w-full max-w-sm flex-col gap-2">
+        {toasts.map(t=>(
+          <div key={t.id} className={cn('rounded-xl border-l-4 bg-surface px-4 py-3 shadow-lg', TONE_BORDER[t.tone])}>
+            <p className="text-sm font-semibold text-ink">{t.title}</p>
+            {t.description && <p className="mt-0.5 text-xs text-ink-muted">{t.description}</p>}
+          </div>))}
+      </div>, document.body)}
+  </ToastCtx.Provider>);
+}
+function useToast(){ return React.useContext(ToastCtx); }
+
+/* ================= DEMO SCREEN: Accounts Receivable ================= */
+const RAW_INVOICES = [
+  { id:'INV-2291', customer:'Sharma Traders', amount:184500, dueDate:'2026-08-25', status:'overdue' },
+  { id:'INV-2298', customer:'Bluepeak Logistics', amount:62000, dueDate:'2026-09-02', status:'pending' },
+  { id:'INV-2301', customer:'Vantage Healthcare', amount:412300, dueDate:'2026-08-18', status:'paid' },
+  { id:'INV-2305', customer:'Coral Manufacturing', amount:97850, dueDate:'2026-09-10', status:'pending' },
+  { id:'INV-2312', customer:'Nimbus Retail Pvt Ltd', amount:28900, dueDate:'2026-08-22', status:'overdue' },
+  { id:'INV-2318', customer:'Orion Distribution', amount:151200, dueDate:'2026-09-05', status:'paid' },
+];
+const STATUS_TONE = { paid:'success', overdue:'danger', pending:'warning' };
+
+function AiIconSm(props){ return <AiGlyph {...props}/>; }
+
+function NavIcon({d}){ return <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden="true"><path d={d} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>; }
+
+function App(){
+  const [tableLoading, setTableLoading] = useState(false);
+  const [tableError, setTableError] = useState(false);
+  const [tableEmpty, setTableEmpty] = useState(false);
+  const [sort, setSort] = useState({key:'dueDate', dir:'asc'});
+  const [page, setPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [savingClaim, setSavingClaim] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const toast = useToast();
+
+  const sorted = useMemo(()=>{
+    if (tableEmpty) return [];
+    const arr = [...RAW_INVOICES];
+    arr.sort((a,b)=>{
+      const dir = sort.dir==='asc'?1:-1;
+      if (a[sort.key] < b[sort.key]) return -1*dir;
+      if (a[sort.key] > b[sort.key]) return 1*dir;
+      return 0;
+    });
+    return arr;
+  }, [sort, tableEmpty]);
+
+  const columns = [
+    { key:'id', header:'Invoice #', sortable:true, render:(r)=><span className="font-mono text-xs">{r.id}</span> },
+    { key:'customer', header:'Customer', sortable:true },
+    { key:'amount', header:'Amount', align:'right', sortable:true, render:(r)=>formatINR(r.amount) },
+    { key:'dueDate', header:'Due', sortable:true, hideBelow:'md', render:(r)=>formatDate(r.dueDate) },
+    { key:'status', header:'Status', render:(r)=><Badge tone={STATUS_TONE[r.status]} withDot>{r.status}</Badge> },
+  ];
+
+  function simulateSave(){
+    setSavingClaim(true);
+    setTimeout(()=>{
+      setSavingClaim(false);
+      setModalOpen(false);
+      toast.notify({ tone:'success', title:'Reminder sent', description:'Sharma Traders was notified about INV-2291.' });
+    }, 1100);
+  }
+
+  const navItems = [
+    { label:'Dashboard', icon:<NavIcon d="M3 10l7-7 7 7M5 8v9h10V8"/> },
+    { label:'Receivables', active:true, icon:<NavIcon d="M4 5h12M4 10h12M4 15h8"/> },
+    { label:'Payables', icon:<NavIcon d="M4 5h12M4 10h8M4 15h12"/> },
+    { label:'GST', icon:<NavIcon d="M10 2l7 4v8l-7 4-7-4V6l7-4z"/> },
+    { label:'Reports', icon:<NavIcon d="M4 16V9M10 16V4M16 16v-6"/> },
+  ];
+
+  return (
+    <div className="flex min-h-screen bg-canvas">
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="absolute inset-0 bg-ink/50" onClick={()=>setMobileNavOpen(false)}/>
+          <div className="relative z-10 h-full w-72 bg-surface"><Sidebar navItems={navItems}/></div>
+        </div>
+      )}
+      <aside aria-label="Primary navigation" className="hidden w-64 shrink-0 border-r border-border bg-surface lg:block">
+        <Sidebar navItems={navItems}/>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-center gap-3 border-b border-border bg-surface px-4 py-3 lg:px-6">
+          <button className="rounded p-2 text-ink-muted hover:bg-canvas lg:hidden" aria-label="Toggle navigation" onClick={()=>setMobileNavOpen(v=>!v)}>
+            <NavIcon d="M3 5h14M3 10h14M3 15h14"/>
+          </button>
+          <div>
+            <h1 className="font-display text-lg font-bold text-ink">Accounts Receivable</h1>
+            <p className="text-xs text-ink-muted">Nexora · Finance &amp; GST</p>
+          </div>
+        </div>
+
+        <main className="flex-1 px-4 py-6 lg:px-8 space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Total receivable" value={formatINR(936750, true)} delta="+4.2% vs last month" trend="up" />
+            <StatCard label="Overdue" value={formatINR(213400, true)} delta="2 invoices" trend="down" />
+            <StatCard label="Collected this month" value={formatINR(561200, true)} delta="+12.8%" trend="up" />
+            <StatCard label="Avg. days to pay" value="18 days" delta="-3 days" trend="up" />
+          </div>
+
+          <InsightCard
+            title="AI Copilot flagged something"
+            action={<Button variant="ai" size="sm" onClick={()=>setModalOpen(true)}><AiIconSm className="h-3.5 w-3.5 mr-1.5"/>Send payment reminder</Button>}
+          >
+            Sharma Traders' invoice INV-2291 is 12 days overdue and this customer has paid late 3 times this quarter — consider sending a reminder now.
+          </InsightCard>
+
+          <div>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-display text-sm font-bold text-ink">Open invoices</h2>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-ink-muted mr-1">Demo states:</span>
+                <Button variant={tableLoading?'primary':'secondary'} size="sm" onClick={()=>{setTableLoading(v=>!v); setTableError(false); setTableEmpty(false);}}>Loading</Button>
+                <Button variant={tableEmpty?'primary':'secondary'} size="sm" onClick={()=>{setTableEmpty(v=>!v); setTableError(false); setTableLoading(false);}}>Empty</Button>
+                <Button variant={tableError?'primary':'secondary'} size="sm" onClick={()=>{setTableError(v=>!v); setTableEmpty(false); setTableLoading(false);}}>Error</Button>
+              </div>
+            </div>
+            <DataTable
+              caption="Open sales invoices"
+              columns={columns}
+              data={sorted}
+              getRowId={(r)=>r.id}
+              isLoading={tableLoading}
+              error={tableError ? 'The finance service timed out. Your data is safe — try again.' : undefined}
+              onRetry={()=>setTableError(false)}
+              sortKey={sort.key}
+              sortDirection={sort.dir}
+              onSortChange={(key,dir)=>setSort({key,dir})}
+              emptyTitle="No open invoices"
+              emptyDescription="Every invoice has been settled. New invoices you raise will appear here."
+              emptyAction={<Button size="sm">Create invoice</Button>}
+              pagination={{ page, pageSize: 6, total: sorted.length, onPageChange: setPage }}
+            />
+          </div>
+
+          <Card className="max-w-xl">
+            <h2 className="font-display text-sm font-bold text-ink mb-4">Add a customer</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField label="Customer name" htmlFor="cname" required>
+                <TextField id="cname" placeholder="e.g. Sharma Traders" />
+              </FormField>
+              <FormField label="GSTIN" htmlFor="gstin" error="Enter a valid 15-character GSTIN" help="Used for e-invoice and GSTR filing">
+                <TextField id="gstin" placeholder="22AAAAA0000A1Z5" className="font-mono" invalid />
+              </FormField>
+              <FormField label="Credit limit" htmlFor="climit">
+                <TextField id="climit" type="number" placeholder="0" />
+              </FormField>
+              <FormField label="Payment terms" htmlFor="terms">
+                <Select id="terms" placeholder="Select terms" options={[{value:'net15',label:'Net 15'},{value:'net30',label:'Net 30'},{value:'net45',label:'Net 45'}]} />
+              </FormField>
+            </div>
+            <div className="mt-5 flex gap-2">
+              <Button onClick={()=>toast.notify({tone:'success', title:'Customer saved', description:'Added to your customer master.'})}>Save customer</Button>
+              <Button variant="secondary">Cancel</Button>
+            </div>
+          </Card>
+        </main>
+      </div>
+
+      <Modal open={modalOpen} onClose={()=>setModalOpen(false)} title="Send payment reminder"
+        description="This sends an automated email to the customer's billing contact."
+        footer={<>
+          <Button variant="secondary" onClick={()=>setModalOpen(false)} disabled={savingClaim}>Cancel</Button>
+          <Button variant="ai" onClick={simulateSave} isLoading={savingClaim} loadingLabel="Sending reminder">Send reminder</Button>
+        </>}>
+        <div className="space-y-3 text-sm text-ink">
+          <p><span className="text-ink-muted">Customer:</span> Sharma Traders</p>
+          <p><span className="text-ink-muted">Invoice:</span> <span className="font-mono">INV-2291</span> — {formatINR(184500)}</p>
+          <p><span className="text-ink-muted">Days overdue:</span> 12</p>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+function Sidebar({navItems}){
+  return (<div className="flex h-full flex-col">
+    <div className="border-b border-border p-4">
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white font-display font-bold text-sm">N</div>
+        <div>
+          <p className="font-display text-sm font-bold text-ink leading-tight">Nexora</p>
+          <p className="text-[11px] text-ink-muted leading-tight">Cognivectra Business OS</p>
+        </div>
+      </div>
+    </div>
+    <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
+      {navItems.map(item=>(
+        <a key={item.label} href="#" aria-current={item.active?'page':undefined}
+          className={cn('flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+            item.active ? 'bg-primary-subtle text-primary' : 'text-ink-muted hover:bg-canvas hover:text-ink')}>
+          {item.icon}<span>{item.label}</span>
+        </a>
+      ))}
+    </nav>
+  </div>);
+}
+
+function Root(){
+  return <ToastProvider><App/></ToastProvider>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root/>);
+</script>
+</body>
+</html>

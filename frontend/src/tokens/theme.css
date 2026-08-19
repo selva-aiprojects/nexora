@@ -1,0 +1,175 @@
+/**
+ * Nexora Design Tokens
+ * ---------------------------------------------------------------------
+ * These are the ONLY hex values that should appear anywhere in the app.
+ * Components consume them through Tailwind classes (see tailwind.config
+ * mapping below), never hard-coded. Changing brand color is a one-file
+ * edit here, not a find-and-replace across the codebase.
+ *
+ * Palette rationale:
+ * - Ink/Canvas/Surface: a near-black navy on off-white canvas, not pure
+ *   #000/#fff — softer on the eyes across long finance/HR sessions.
+ * - Primary (Indigo): the one saturated color used for anything a user
+ *   can click that causes a transaction (submit, approve, post).
+ * - Accent (Insight Violet): reserved ONLY for AI-originated content —
+ *   Copilot suggestions, anomaly flags, predictive numbers. Seeing violet
+ *   anywhere in the product should reliably mean "the AI produced this,"
+ *   never used for decoration. This is the system's signature device.
+ * - Semantic (success/warning/danger/info): status only, never decorative.
+ * - Brand Gradient: Cyan → Blue → Violet for AI features, KPIs, premium cards.
+ * - Module Accents: subtle domain-specific accents while keeping brand consistent.
+ */
+
+:root {
+  /* Neutrals */
+  --nx-ink: 15 23 42;               /* #0F172A — Slate 900 main text */
+  --nx-ink-muted: 100 116 139;      /* #64748B — Slate 500 secondary text */
+  --nx-canvas: 248 250 252;         /* #F8FAFC — Slate 50 background */
+  --nx-surface: 255 255 255;        /* #FFFFFF — card/table surface */
+  --nx-border: 226 232 240;         /* #E2E8F0 — Slate 200 borders */
+  --nx-border-strong: 203 213 225;  /* #CBD5E1 — Slate 300 input borders */
+
+  /* Brand — Intelligent Indigo */
+  --nx-primary: 67 56 202;          /* #4338CA — Deep Indigo */
+  --nx-primary-dark: 49 46 129;     /* #312E81 — Navy Indigo */
+  --nx-primary-hover: 55 48 163;    /* #3730A3 */
+  --nx-primary-subtle: 238 242 255; /* #EEF2FF — indigo-50 tint */
+
+  /* AI / Insight accent — reserved, see rationale above */
+  --nx-accent: 124 58 237;          /* #7C3AED — Violet */
+  --nx-accent-subtle: 245 243 255;  /* #F5F3FF — violet-50 tint */
+
+  /* AI Blue & Cyan for gradient usage */
+  --nx-ai-blue: 37 99 235;          /* #2563EB — Electric Blue */
+  --nx-ai-cyan: 6 182 212;          /* #06B6D4 — Cyan */
+
+  /* Semantic */
+  --nx-success: 5 150 105;          /* #059669 — Emerald */
+  --nx-success-subtle: 236 253 245; /* #ECFDF5 */
+  --nx-warning: 217 119 6;          /* #D97706 — Amber */
+  --nx-warning-subtle: 255 247 237; /* #FFF7ED */
+  --nx-danger: 220 38 38;           /* #DC2626 — Red */
+  --nx-danger-subtle: 254 242 242;  /* #FEF2F2 */
+  --nx-info: 2 132 199;             /* #0284C7 — Sky 600 */
+  --nx-info-subtle: 240 249 255;    /* #F0F9FF */
+
+  /* Module Accents */
+  --nx-module-finance: 67 56 202;           /* Indigo */
+  --nx-module-hrms: 124 58 237;             /* Violet */
+  --nx-module-manufacturing: 234 88 12;     /* Orange 600 */
+  --nx-module-inventory: 37 99 235;         /* Blue */
+  --nx-module-compliance: 5 150 105;        /* Emerald */
+  --nx-module-documents: 100 116 139;       /* Slate 500 */
+  --nx-module-ai: 6 182 212;                /* Cyan */
+
+  /* Elevation */
+  --nx-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+  --nx-shadow-md: 0 4px 16px rgb(15 23 42 / 0.10);
+  --nx-shadow-lg: 0 12px 40px rgb(15 23 42 / 0.16);
+
+  /* Radius */
+  --nx-radius-sm: 6px;
+  --nx-radius-md: 10px;
+  --nx-radius-lg: 16px;
+
+  /* Type */
+  --nx-font-display: 'Manrope', 'Inter', system-ui, sans-serif;
+  --nx-font-body: 'Inter', system-ui, sans-serif;
+  --nx-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Dark mode — secondary theme for AI dashboards, analytics, executive views */
+[data-theme="dark"] {
+  --nx-ink: 248 250 252;               /* #F8FAFC */
+  --nx-ink-muted: 148 163 184;         /* #94A3B8 — Slate 400 */
+  --nx-canvas: 8 11 22;                /* #080B16 */
+  --nx-surface: 17 24 39;              /* #111827 */
+  --nx-surface-2: 23 32 51;            /* #172033 */
+  --nx-border: 39 52 73;               /* #273449 */
+  --nx-border-strong: 51 65 85;        /* #334155 */
+
+  --nx-primary: 99 102 241;            /* #6366F1 — Indigo 500 */
+  --nx-primary-dark: 79 70 229;        /* #4F46E5 — Indigo 600 */
+  --nx-primary-hover: 129 140 248;     /* #818CF8 — Indigo 400 */
+  --nx-primary-subtle: 30 27 75;       /* #1E1B4B — indigo-950 */
+
+  --nx-accent: 139 92 246;             /* #8B5CF6 — Violet 500 */
+  --nx-accent-subtle: 46 23 92;        /* #2E175C */
+
+  --nx-ai-blue: 59 130 246;            /* #3B82F6 — Blue 500 */
+  --nx-ai-cyan: 34 211 238;            /* #22D3EE — Cyan 400 */
+
+  --nx-success: 16 185 129;            /* #10B981 */
+  --nx-success-subtle: 4 39 30;
+  --nx-warning: 245 158 11;            /* #F59E0B */
+  --nx-warning-subtle: 55 42 10;
+  --nx-danger: 239 68 68;              /* #EF4444 */
+  --nx-danger-subtle: 63 20 20;
+  --nx-info: 56 189 248;               /* #38BDF8 */
+  --nx-info-subtle: 15 35 55;
+
+  --nx-module-finance: 99 102 241;
+  --nx-module-hrms: 139 92 246;
+  --nx-module-manufacturing: 251 146 60; /* Orange 400 */
+  --nx-module-inventory: 59 130 246;
+  --nx-module-compliance: 16 185 129;
+  --nx-module-documents: 148 163 184;
+  --nx-module-ai: 34 211 238;
+
+  --nx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --nx-shadow-md: 0 4px 16px rgb(0 0 0 / 0.4);
+  --nx-shadow-lg: 0 12px 40px rgb(0 0 0 / 0.5);
+}
+
+/* Brand gradient utilities */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, rgb(var(--nx-ai-cyan)), rgb(var(--nx-ai-blue)), rgb(var(--nx-accent)));
+}
+
+.bg-brand-gradient-vertical {
+  background: linear-gradient(to bottom, rgb(var(--nx-ai-cyan)), rgb(var(--nx-ai-blue)), rgb(var(--nx-accent)));
+}
+
+.text-brand-gradient {
+  background: linear-gradient(135deg, rgb(var(--nx-ai-cyan)), rgb(var(--nx-ai-blue)), rgb(var(--nx-accent)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.border-brand-gradient {
+  border-image: linear-gradient(135deg, rgb(var(--nx-ai-cyan)), rgb(var(--nx-ai-blue)), rgb(var(--nx-accent))) 1;
+}
+
+/* Module accent utilities */
+.text-module-finance { color: rgb(var(--nx-module-finance)); }
+.text-module-hrms { color: rgb(var(--nx-module-hrms)); }
+.text-module-manufacturing { color: rgb(var(--nx-module-manufacturing)); }
+.text-module-inventory { color: rgb(var(--nx-module-inventory)); }
+.text-module-compliance { color: rgb(var(--nx-module-compliance)); }
+.text-module-documents { color: rgb(var(--nx-module-documents)); }
+.text-module-ai { color: rgb(var(--nx-module-ai)); }
+
+.bg-module-finance { background-color: rgb(var(--nx-module-finance)); }
+.bg-module-hrms { background-color: rgb(var(--nx-module-hrms)); }
+.bg-module-manufacturing { background-color: rgb(var(--nx-module-manufacturing)); }
+.bg-module-inventory { background-color: rgb(var(--nx-module-inventory)); }
+.bg-module-compliance { background-color: rgb(var(--nx-module-compliance)); }
+.bg-module-documents { background-color: rgb(var(--nx-module-documents)); }
+.bg-module-ai { background-color: rgb(var(--nx-module-ai)); }
+
+.bg-module-finance-subtle { background-color: rgb(var(--nx-module-finance) / 0.1); }
+.bg-module-hrms-subtle { background-color: rgb(var(--nx-module-hrms) / 0.1); }
+.bg-module-manufacturing-subtle { background-color: rgb(var(--nx-module-manufacturing) / 0.1); }
+.bg-module-inventory-subtle { background-color: rgb(var(--nx-module-inventory) / 0.1); }
+.bg-module-compliance-subtle { background-color: rgb(var(--nx-module-compliance) / 0.1); }
+.bg-module-documents-subtle { background-color: rgb(var(--nx-module-documents) / 0.1); }
+.bg-module-ai-subtle { background-color: rgb(var(--nx-module-ai) / 0.1); }
+
+.border-module-finance { border-color: rgb(var(--nx-module-finance)); }
+.border-module-hrms { border-color: rgb(var(--nx-module-hrms)); }
+.border-module-manufacturing { border-color: rgb(var(--nx-module-manufacturing)); }
+.border-module-inventory { border-color: rgb(var(--nx-module-inventory)); }
+.border-module-compliance { border-color: rgb(var(--nx-module-compliance)); }
+.border-module-documents { border-color: rgb(var(--nx-module-documents)); }
+.border-module-ai { border-color: rgb(var(--nx-module-ai)); }

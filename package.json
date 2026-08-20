@@ -4,6 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build && cd .. && node scripts/copy-frontend.mjs && cd server && npm install && npx tsc -p tsconfig.json"
+    "build:frontend": "npm install --prefix frontend && npm run build --prefix frontend",
+    "build:server": "npm install --prefix server && npx tsc -p server/tsconfig.json",
+    "build": "npm run build:frontend && npm run build:server",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:server": "npm run dev --prefix server"
   }
 }

@@ -3,6 +3,14 @@ import { Card, EmptyState, PageHeader, SkeletonText } from '@/components';
 import { api } from '@/lib/api';
 import { ARAgingChart, BarChartGeneric, DonutChart, MetricsTable, MultiLineChart, StockByWarehouseChart } from '@/components';
 
+const CHART_COLORS = {
+  primary: '#4338CA',
+  cyan: '#06B6D4',
+  success: '#059669',
+  blue: '#2563EB',
+  danger: '#DC2626',
+};
+
 const MODULE_META: Record<string, { title: string; description: string; accent: string }> = {
   sales: {
     title: 'Sales & Order Management',
@@ -229,14 +237,14 @@ export default function ModuleDashboard({ module }: { module: string }) {
             lines={keys.map((k) => ({
               dataKey: k,
               name: k.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase()),
-              color: k === 'revenue' || k === 'inflow' || k === 'won' ? 'rgb(var(--nx-primary))' : k === 'receivables' || k === 'outflow' || k === 'absent' || k === 'scrap' ? 'rgb(var(--nx-ai-cyan))' : k === 'units' || k === 'spend' ? 'rgb(var(--nx-success))' : 'rgb(var(--nx-ai-blue))',
+               color: k === 'revenue' || k === 'inflow' || k === 'won' ? CHART_COLORS.primary : k === 'receivables' || k === 'outflow' || k === 'absent' || k === 'scrap' ? CHART_COLORS.cyan : k === 'units' || k === 'spend' ? CHART_COLORS.success : CHART_COLORS.blue,
             }))}
             xAxisLabel="Period"
             yAxisLabel={isFinancial ? 'Amount (₹)' : isAttendance ? 'Employees' : isProduction ? 'Units / %' : 'Count'}
           />
         );
       } else if (chartKey.includes('department') || chartKey.includes('Department')) {
-        chartComponent = <BarChartGeneric data={numericData} dataKey="value" name="Employees" color="rgb(var(--nx-primary))" xAxisLabel="Department" yAxisLabel="Employees" />;
+        chartComponent = <BarChartGeneric data={numericData} dataKey="value" name="Employees" color={CHART_COLORS.primary} xAxisLabel="Department" yAxisLabel="Employees" />;
       } else if (chartKey.includes('attendance') || chartKey.includes('Attendance')) {
         const keys = Object.keys(chartData[0]).filter((k) => k !== 'name');
         chartComponent = (
@@ -245,16 +253,16 @@ export default function ModuleDashboard({ module }: { module: string }) {
             lines={keys.map((k) => ({
               dataKey: k,
               name: k.charAt(0).toUpperCase() + k.slice(1),
-              color: k === 'present' ? 'rgb(var(--nx-success))' : 'rgb(var(--nx-danger))',
+                color: k === 'present' ? CHART_COLORS.success : CHART_COLORS.danger,
             }))}
             xAxisLabel="Day"
             yAxisLabel="Employees"
           />
         );
       } else if (chartKey.includes('Volume') || chartKey.includes('volume')) {
-        chartComponent = <BarChartGeneric data={numericData} dataKey="units" name="Units" color="rgb(var(--nx-primary))" xAxisLabel="Month" yAxisLabel="Units" />;
+        chartComponent = <BarChartGeneric data={numericData} dataKey="units" name="Units" color={CHART_COLORS.primary} xAxisLabel="Month" yAxisLabel="Units" />;
       } else {
-        chartComponent = <BarChartGeneric data={numericData} dataKey="value" name="Count" color="rgb(var(--nx-ai-blue))" xAxisLabel="Category" yAxisLabel="Count" />;
+        chartComponent = <BarChartGeneric data={numericData} dataKey="value" name="Count" color={CHART_COLORS.blue} xAxisLabel="Category" yAxisLabel="Count" />;
       }
 
       return (

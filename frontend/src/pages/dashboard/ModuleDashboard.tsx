@@ -154,6 +154,7 @@ export default function ModuleDashboard({ module }: { module: string }) {
             <KpiCard label="Payables" value={formatCurrency(kpis.payables ?? 0)} trend={-3} suffix="" />
             <KpiCard label="AR Current" value={formatCurrency(kpis.arCurrent ?? 0)} />
             <KpiCard label="AR 90+ Days" value={formatCurrency(kpis.arDays90Plus ?? 0)} trend={-2} suffix="" />
+            <KpiCard label="Budget Variance" value={formatPercent(kpis.budgetVariance ?? 0)} trend={(kpis.budgetVariance ?? 0) > 0 ? -1 : 1} suffix="%" />
           </>
         );
       case 'procurement':
@@ -165,6 +166,8 @@ export default function ModuleDashboard({ module }: { module: string }) {
             <KpiCard label="Spend Under Contract" value={formatCurrency(kpis.spendUnderContract ?? 0)} />
             <KpiCard label="PRs Without Contract" value={String(kpis.prsWithoutContract ?? 0)} />
             <KpiCard label="Avg Vendor Rating" value={String(kpis.avgVendorRating ?? 0)} suffix="/5" />
+            <KpiCard label="Avg Lead Time" value={String(kpis.avgLeadTimeDays ?? 0)} suffix=" days" />
+            <KpiCard label="Lead Time Variance" value={String(kpis.leadTimeVariance ?? 0)} suffix=" days" />
           </>
         );
       case 'inventory':
@@ -176,6 +179,8 @@ export default function ModuleDashboard({ module }: { module: string }) {
             <KpiCard label="Overstock Items" value={String(kpis.overstockCount ?? 0)} />
             <KpiCard label="Stockout Rate" value={formatPercent(kpis.stockoutRate ?? 0)} />
             <KpiCard label="Warehouses" value={String(kpis.warehouseCount ?? 0)} />
+            <KpiCard label="On-Time Delivery" value={formatPercent(kpis.onTimeDelivery ?? 0)} trend={2} suffix="%" />
+            <KpiCard label="Avg Fulfillment Cycle" value={String(kpis.avgFulfillmentCycle ?? 0)} suffix=" days" />
           </>
         );
       case 'crm':
@@ -187,6 +192,7 @@ export default function ModuleDashboard({ module }: { module: string }) {
             <KpiCard label="Churn Rate" value={formatPercent(kpis.churnRate ?? 0)} trend={-2} suffix="%" />
             <KpiCard label="Avg Order Value" value={formatCurrency(kpis.aov ?? 0)} />
             <KpiCard label="Open Opportunities" value={formatCurrency(kpis.openOpportunities ?? 0)} />
+            <KpiCard label="CAC" value={formatCurrency(kpis.cac ?? 0)} trend={-3} suffix="" />
           </>
         );
       case 'hrms':

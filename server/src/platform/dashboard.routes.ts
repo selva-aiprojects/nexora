@@ -225,6 +225,11 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       const arAging = arAgingBuckets(sales);
       const apTurn = apTurnover(purchases);
 
+      const budgets = db.all(tid, 'accounting_budgets');
+      const actualSpend = purchases.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
+      const budgetedSpend = budgets.reduce((s, b) => s + (b.amount || 0), 0);
+      const budgetVariance = budgetedSpend > 0 ? ((actualSpend - budgetedSpend) / budgetedSpend) * 100 : 0;
+
       data.kpis = {
         revenue,
         payables,
@@ -244,6 +249,9 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         gstPending: gst.filter((g) => g.status === 'pending').length,
         gstFiled: gst.filter((g) => g.status === 'filed').length,
         bankAccounts: banks.length,
+        budgetedSpend,
+        actualSpend,
+        budgetVariance: Math.round(budgetVariance * 10) / 10,
       };
       data.charts = {
         arAging: [
@@ -275,7 +283,18 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       const contracts = db.all(tid, 'procurement_contracts');
       const grns = db.all(tid, 'procurement_grns');
       const purchaseOrders = db.all(tid, 'manufacturing_purchase_orders');
+      const pos = db.all(tid, 'manufacturing_purchase_orders');
       const avgLeadTime = vendors.length > 0 ? vendors.reduce((s, v) => s + (v.rating || 3), 0) / vendors.length : 0;
+      const leadTimes = pos.map((po) => {
+        const grn = grns.find((g) => g.poId === po.id);
+        if (!grn) return null;
+        const orderDate = new Date(po.date);
+        const receiptDate = new Date(grn.date);
+        const days = Math.max(0, Math.round((receiptDate.getTime() - orderDate.getTime()) / 86400000));
+        return days;
+      }).filter((days): days is number => days !== null);
+      const avgLeadTimeDays = leadTimes.length > 0 ? leadTimes.reduce((s, d) => s + d, 0) / leadTimes.length : 0;
+      const leadTimeVariance = leadTimes.length > 1 ? Math.round(Math.sqrt(leadTimes.reduce((s, d) => s + Math.pow(d - avgLeadTimeDays, 2), 0) / (leadTimes.length - 1)) * 10) / 10 : 0;
 
       const spendByCategory = vendors.reduce((acc, v) => {
         acc[v.category] = (acc[v.category] || 0) + (v.rating || 0) * 10000;
@@ -292,6 +311,8 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         avgVendorRating: Math.round(avgLeadTime * 10) / 10,
         spendUnderContract: Math.round(contracts.reduce((s, c) => s + c.value, 0) * 0.8),
         prsWithoutContract: Math.max(0, purchaseOrders.length - contracts.filter((c) => c.status === 'active').length),
+        avgLeadTimeDays: Math.round(avgLeadTimeDays),
+        leadTimeVariance,
       };
       data.charts = {
         vendorStatus: [
@@ -317,6 +338,7 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       const items = db.all(tid, 'manufacturing_items');
       const adjustments = db.all(tid, 'inventory_adjustments');
       const sales = db.all(tid, 'accounting_sales_invoices');
+      const salesOrders = db.all(tid, 'crm_sales_orders');
       const cogs = sales.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total * 0.6), 0);
       const avgInventory = stock.reduce((s, st) => s + st.quantity, 0) / Math.max(1, items.length);
       const turnoverRate = avgInventory > 0 ? cogs / avgInventory : 0;
@@ -329,6 +351,18 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         return item && st.quantity > item.reorderLevel * 3;
       }).length;
 
+      const fulfilledOrders = salesOrders.filter((o) => o.status === 'completed' || o.status === 'processing');
+      const onTimeOrders = fulfilledOrders.filter((o) => {
+        if (!o.deliveryDate) return false;
+        return new Date(o.deliveryDate) <= new Date(o.date);
+      }).length;
+      const otd = fulfilledOrders.length > 0 ? (onTimeOrders / fulfilledOrders.length) * 100 : 0;
+      const avgCycleTime = fulfilledOrders.length > 0 ? fulfilledOrders.reduce((s, o) => {
+        const order = new Date(o.date);
+        const delivery = new Date(o.deliveryDate || o.date);
+        return s + Math.max(1, Math.round((delivery.getTime() - order.getTime()) / 86400000));
+      }, 0) / fulfilledOrders.length : 0;
+
       data.kpis = {
         totalStock: stock.reduce((s, st) => s + st.quantity, 0),
         warehouseCount: warehouses.length,
@@ -338,6 +372,8 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         overstockCount,
         turnoverRate: Math.round(turnoverRate * 10) / 10,
         stockoutRate: items.length > 0 ? Math.round((lowStockCount / items.length) * 100) : 0,
+        onTimeDelivery: Math.round(otd * 10) / 10,
+        avgFulfillmentCycle: Math.round(avgCycleTime),
       };
       data.charts = {
         stockByWarehouse: warehouses.map((w) => {
@@ -373,6 +409,9 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       const churnRate = customers.length > 0 ? (lostLeads.length / Math.max(1, customers.length)) * 100 : 0;
       const avgOrderValue = salesOrders.length > 0 ? salesOrders.reduce((s, o) => s + o.total, 0) / salesOrders.length : 0;
       const openOpportunities = quotes.filter((q) => q.status === 'draft' || q.status === 'sent').reduce((s, q) => s + q.total, 0);
+      const marketingSpend = sales.reduce((s, i) => s + (i.discount || 0), 0);
+      const newCustomers = customers.filter((c) => new Date(c.createdAt) >= new Date('2026-06-01')).length;
+      const cac = newCustomers > 0 ? marketingSpend / newCustomers : 0;
 
       data.kpis = {
         customerCount: customers.length,
@@ -385,6 +424,7 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         churnRate: Math.round(churnRate * 10) / 10,
         avgOrderValue: Math.round(avgOrderValue),
         openOpportunities,
+        cac: Math.round(cac),
       };
       data.charts = {
         leadStatus: [

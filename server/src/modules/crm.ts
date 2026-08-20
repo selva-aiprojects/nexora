@@ -30,15 +30,43 @@ db.seed(COL.contacts, [
 db.seed(COL.leads, [
   { id: 'lead_001', tenantId: TID, customerId: 'cust_001', source: 'website', status: 'qualified', probability: 70, estimatedValue: 250000, expectedCloseDate: '2026-09-30', assignedTo: 'Sales Team A', notes: 'Interested in bulk order', createdAt: '2026-08-01' },
   { id: 'lead_002', tenantId: TID, customerId: 'cust_002', source: 'referral', status: 'new', probability: 30, estimatedValue: 180000, expectedCloseDate: '2026-10-15', assignedTo: 'Sales Team B', notes: 'Initial inquiry', createdAt: '2026-08-10' },
+  { id: 'lead_003', tenantId: TID, customerId: 'cust_003', source: 'trade_show', status: 'new', probability: 25, estimatedValue: 320000, expectedCloseDate: '2026-11-01', assignedTo: 'Sales Team A', notes: 'Met at Pharma Expo 2026', createdAt: '2026-03-15' },
+  { id: 'lead_004', tenantId: TID, customerId: 'cust_001', source: 'cold_call', status: 'qualified', probability: 55, estimatedValue: 150000, expectedCloseDate: '2026-09-15', assignedTo: 'Sales Team C', notes: 'Existing customer upsell', createdAt: '2026-04-02' },
+  { id: 'lead_005', tenantId: TID, customerId: 'cust_002', source: 'website', status: 'won', probability: 100, estimatedValue: 220000, expectedCloseDate: '2026-06-30', assignedTo: 'Sales Team B', notes: 'Deal closed successfully', createdAt: '2026-05-10' },
+  { id: 'lead_006', tenantId: TID, customerId: 'cust_003', source: 'referral', status: 'lost', probability: 0, estimatedValue: 95000, expectedCloseDate: '2026-07-20', assignedTo: 'Sales Team A', notes: 'Chose competitor on pricing', createdAt: '2026-06-05' },
+  { id: 'lead_007', tenantId: TID, customerId: 'cust_001', source: 'website', status: 'qualified', probability: 65, estimatedValue: 175000, expectedCloseDate: '2026-10-30', assignedTo: 'Sales Team A', notes: 'Follow up scheduled', createdAt: '2026-07-12' },
+  { id: 'lead_008', tenantId: TID, customerId: 'cust_002', source: 'trade_show', status: 'new', probability: 20, estimatedValue: 280000, expectedCloseDate: '2026-12-01', assignedTo: 'Sales Team B', notes: 'Interested in logistics automation', createdAt: '2026-08-05' },
+  { id: 'lead_009', tenantId: TID, customerId: 'cust_003', source: 'cold_call', status: 'qualified', probability: 50, estimatedValue: 130000, expectedCloseDate: '2026-09-20', assignedTo: 'Sales Team A', notes: 'Needs sample testing', createdAt: '2026-04-20' },
+  { id: 'lead_010', tenantId: TID, customerId: 'cust_001', source: 'referral', status: 'won', probability: 100, estimatedValue: 360000, expectedCloseDate: '2026-06-15', assignedTo: 'Sales Team C', notes: 'Annual maintenance contract', createdAt: '2026-03-01' },
+  { id: 'lead_011', tenantId: TID, customerId: 'cust_002', source: 'website', status: 'lost', probability: 0, estimatedValue: 78000, expectedCloseDate: '2026-05-30', assignedTo: 'Sales Team B', notes: 'Budget constraints', createdAt: '2026-05-22' },
+  { id: 'lead_012', tenantId: TID, customerId: 'cust_003', source: 'trade_show', status: 'new', probability: 35, estimatedValue: 210000, expectedCloseDate: '2026-11-15', assignedTo: 'Sales Team A', notes: 'Requested demo', createdAt: '2026-08-15' },
+  { id: 'lead_013', tenantId: TID, customerId: 'cust_001', source: 'website', status: 'qualified', probability: 60, estimatedValue: 190000, expectedCloseDate: '2026-10-05', assignedTo: 'Sales Team A', notes: 'Price negotiation stage', createdAt: '2026-07-25' },
+  { id: 'lead_014', tenantId: TID, customerId: 'cust_003', source: 'referral', status: 'won', probability: 100, estimatedValue: 410000, expectedCloseDate: '2026-08-20', assignedTo: 'Sales Team A', notes: 'Large order confirmed', createdAt: '2026-06-18' },
+  { id: 'lead_015', tenantId: TID, customerId: 'cust_002', source: 'cold_call', status: 'new', probability: 15, estimatedValue: 160000, expectedCloseDate: '2026-12-15', assignedTo: 'Sales Team B', notes: 'Initial contact made', createdAt: '2026-08-12' },
 ]);
 
 db.seed(COL.quotes, [
   { id: 'quo_001', tenantId: TID, customerId: 'cust_001', number: 'QT-2026-001', date: '2026-08-05', validUntil: '2026-08-20', status: 'accepted', total: 245000, currency: 'INR' },
   { id: 'quo_002', tenantId: TID, customerId: 'cust_002', number: 'QT-2026-002', date: '2026-08-12', validUntil: '2026-08-27', status: 'sent', total: 175000, currency: 'INR' },
+  { id: 'quo_003', tenantId: TID, customerId: 'cust_003', number: 'QT-2026-003', date: '2026-03-20', validUntil: '2026-04-05', status: 'accepted', total: 310000, currency: 'INR' },
+  { id: 'quo_004', tenantId: TID, customerId: 'cust_001', number: 'QT-2026-004', date: '2026-04-15', validUntil: '2026-05-01', status: 'rejected', total: 185000, currency: 'INR' },
+  { id: 'quo_005', tenantId: TID, customerId: 'cust_002', number: 'QT-2026-005', date: '2026-05-08', validUntil: '2026-05-25', status: 'accepted', total: 420000, currency: 'INR' },
+  { id: 'quo_006', tenantId: TID, customerId: 'cust_003', number: 'QT-2026-006', date: '2026-06-12', validUntil: '2026-06-30', status: 'sent', total: 95000, currency: 'INR' },
+  { id: 'quo_007', tenantId: TID, customerId: 'cust_001', number: 'QT-2026-007', date: '2026-07-01', validUntil: '2026-07-20', status: 'draft', total: 560000, currency: 'INR' },
+  { id: 'quo_008', tenantId: TID, customerId: 'cust_003', number: 'QT-2026-008', date: '2026-08-02', validUntil: '2026-08-18', status: 'rejected', total: 120000, currency: 'INR' },
+  { id: 'quo_009', tenantId: TID, customerId: 'cust_002', number: 'QT-2026-009', date: '2026-03-10', validUntil: '2026-03-28', status: 'accepted', total: 270000, currency: 'INR' },
+  { id: 'quo_010', tenantId: TID, customerId: 'cust_001', number: 'QT-2026-010', date: '2026-06-25', validUntil: '2026-07-12', status: 'sent', total: 330000, currency: 'INR' },
 ]);
 
 db.seed(COL.salesOrders, [
   { id: 'so_001', tenantId: TID, customerId: 'cust_001', quoteId: 'quo_001', number: 'SO-2026-001', date: '2026-08-08', deliveryDate: '2026-08-25', status: 'processing', total: 245000, currency: 'INR' },
+  { id: 'so_002', tenantId: TID, customerId: 'cust_003', quoteId: 'quo_003', number: 'SO-2026-002', date: '2026-03-25', deliveryDate: '2026-04-15', status: 'completed', total: 310000, currency: 'INR' },
+  { id: 'so_003', tenantId: TID, customerId: 'cust_001', quoteId: 'quo_010', number: 'SO-2026-003', date: '2026-06-30', deliveryDate: '2026-07-20', status: 'completed', total: 330000, currency: 'INR' },
+  { id: 'so_004', tenantId: TID, customerId: 'cust_002', quoteId: 'quo_005', number: 'SO-2026-004', date: '2026-05-15', deliveryDate: '2026-06-05', status: 'completed', total: 420000, currency: 'INR' },
+  { id: 'so_005', tenantId: TID, customerId: 'cust_001', quoteId: 'quo_007', number: 'SO-2026-005', date: '2026-07-10', deliveryDate: '2026-08-01', status: 'cancelled', total: 560000, currency: 'INR' },
+  { id: 'so_006', tenantId: TID, customerId: 'cust_003', quoteId: 'quo_006', number: 'SO-2026-006', date: '2026-06-20', deliveryDate: '2026-07-10', status: 'processing', total: 95000, currency: 'INR' },
+  { id: 'so_007', tenantId: TID, customerId: 'cust_002', quoteId: 'quo_002', number: 'SO-2026-007', date: '2026-08-18', deliveryDate: '2026-09-05', status: 'pending', total: 175000, currency: 'INR' },
+  { id: 'so_008', tenantId: TID, customerId: 'cust_001', quoteId: 'quo_004', number: 'SO-2026-008', date: '2026-04-20', deliveryDate: '2026-05-10', status: 'cancelled', total: 185000, currency: 'INR' },
 ]);
 
 // Customers

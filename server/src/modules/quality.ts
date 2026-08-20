@@ -130,15 +130,36 @@ router.put('/non-conformances/:id', asyncHandler(async (req, res) => {
 db.seed(COL.plans, [
   { id: 'qcp_0001', tenantId: TID, name: 'Incoming Material Check', itemId: 'itm_0001', type: 'incoming', frequency: 'per-batch', criteria: 'Visual, dimensions, chemical composition', status: 'active', createdAt: '2026-06-01' },
   { id: 'qcp_0002', tenantId: TID, name: 'Final Product Inspection', itemId: 'itm_0002', type: 'final', frequency: 'per-batch', criteria: 'Functional test, packaging, label', status: 'active', createdAt: '2026-06-01' },
+  { id: 'qcp_0003', tenantId: TID, name: 'In-Process QC', itemId: 'itm_0003', type: 'in_process', frequency: 'daily', criteria: 'Dimensional, surface finish', status: 'active', createdAt: '2026-06-15' },
+  { id: 'qcp_0004', tenantId: TID, name: 'Outgoing Dispatch Check', itemId: 'itm_0004', type: 'final', frequency: 'per-batch', criteria: 'Packing, marking, quantity', status: 'active', createdAt: '2026-07-01' },
+  { id: 'qcp_0005', tenantId: TID, name: 'Raw Material Sampling', itemId: 'itm_0005', type: 'incoming', frequency: 'per-batch', criteria: 'Hardness test, visual inspection', status: 'draft', createdAt: '2026-07-15' },
+  { id: 'qcp_0006', tenantId: TID, name: 'Calibration Check', itemId: 'itm_0006', type: 'in_process', frequency: 'weekly', criteria: 'Gauge R&R, CMC certificate', status: 'active', createdAt: '2026-08-01' },
+  { id: 'qcp_0007', tenantId: TID, name: 'Packaging Integrity', itemId: 'itm_0007', type: 'final', frequency: 'per-batch', criteria: 'Drop test, seal integrity', status: 'draft', createdAt: '2026-08-10' },
+  { id: 'qcp_0008', tenantId: TID, name: 'Chemical Composition Check', itemId: 'itm_0008', type: 'incoming', frequency: 'per-batch', criteria: 'Spectro analysis', status: 'active', createdAt: '2026-08-15' },
 ]);
 
 db.seed(COL.checks, [
   { id: 'qch_0001', tenantId: TID, planId: 'qcp_0001', batchId: 'BTH-2026-089', inspectorId: 'emp_003', date: '2026-08-15', result: 'passed', remarks: 'All parameters within limits', status: 'passed', createdAt: '2026-08-15' },
   { id: 'qch_0002', tenantId: TID, planId: 'qcp_0001', batchId: 'BTH-2026-090', inspectorId: 'emp_003', date: '2026-08-16', result: 'failed', remarks: 'Dimensional deviation +0.5mm', status: 'failed', createdAt: '2026-08-16' },
+  { id: 'qch_0003', tenantId: TID, planId: 'qcp_0002', batchId: 'BTH-2026-091', inspectorId: 'emp_003', date: '2026-08-17', result: 'passed', remarks: 'Functionality OK', status: 'passed', createdAt: '2026-08-17' },
+  { id: 'qch_0004', tenantId: TID, planId: 'qcp_0003', batchId: 'BTH-2026-092', inspectorId: 'emp_003', date: '2026-08-14', result: 'conditional', remarks: 'Surface finish borderline', status: 'conditional', createdAt: '2026-08-14' },
+  { id: 'qch_0005', tenantId: TID, planId: 'qcp_0004', batchId: 'BTH-2026-093', inspectorId: 'emp_003', date: '2026-08-13', result: 'passed', remarks: 'Packaging verified', status: 'passed', createdAt: '2026-08-13' },
+  { id: 'qch_0006', tenantId: TID, planId: 'qcp_0005', batchId: 'BTH-2026-094', inspectorId: 'emp_003', date: '2026-08-12', result: 'pending', remarks: 'Awaiting lab results', status: 'pending', createdAt: '2026-08-12' },
+  { id: 'qch_0007', tenantId: TID, planId: 'qcp_0006', batchId: 'BTH-2026-095', inspectorId: 'emp_003', date: '2026-08-10', result: 'passed', remarks: 'Calibration within limits', status: 'passed', createdAt: '2026-08-10' },
+  { id: 'qch_0008', tenantId: TID, planId: 'qcp_0008', batchId: 'BTH-2026-096', inspectorId: 'emp_003', date: '2026-08-08', result: 'passed', remarks: 'Chemical composition OK', status: 'passed', createdAt: '2026-08-08' },
+  { id: 'qch_0009', tenantId: TID, planId: 'qcp_0001', batchId: 'BTH-2026-085', inspectorId: 'emp_003', date: '2026-07-25', result: 'passed', remarks: 'Visual check passed', status: 'passed', createdAt: '2026-07-25' },
+  { id: 'qch_0010', tenantId: TID, planId: 'qcp_0003', batchId: 'BTH-2026-086', inspectorId: 'emp_003', date: '2026-07-20', result: 'failed', remarks: 'Crack detected on sample 3', status: 'failed', createdAt: '2026-07-20' },
+  { id: 'qch_0011', tenantId: TID, planId: 'qcp_0002', batchId: 'BTH-2026-087', inspectorId: 'emp_003', date: '2026-07-15', result: 'passed', remarks: 'All tests passed', status: 'passed', createdAt: '2026-07-15' },
+  { id: 'qch_0012', tenantId: TID, planId: 'qcp_0004', batchId: 'BTH-2026-088', inspectorId: 'emp_003', date: '2026-07-10', result: 'conditional', remarks: 'Minor label issue', status: 'conditional', createdAt: '2026-07-10' },
 ]);
 
 db.seed(COL.ncs, [
   { id: 'qnc_0001', tenantId: TID, checkId: 'qch_0002', description: 'Dimensional deviation beyond tolerance', severity: 'major', correctiveAction: 'Rework required, hold batch', status: 'open', createdAt: '2026-08-16' },
+  { id: 'qnc_0002', tenantId: TID, checkId: 'qch_0004', description: 'Surface finish not meeting spec', severity: 'minor', correctiveAction: 'Polish and re-inspect', status: 'investigating', createdAt: '2026-08-14' },
+  { id: 'qnc_0003', tenantId: TID, checkId: 'qch_0010', description: 'Crack detected on sample 3', severity: 'critical', correctiveAction: 'Stop production, scrap batch', status: 'open', createdAt: '2026-07-20' },
+  { id: 'qnc_0004', tenantId: TID, checkId: 'qch_0012', description: 'Minor label misalignment', severity: 'minor', correctiveAction: 'Reprint labels', status: 'resolved', createdAt: '2026-07-10' },
+  { id: 'qnc_0005', tenantId: TID, checkId: 'qch_0006', description: 'Pending lab results for hardness test', severity: 'minor', correctiveAction: 'Hold batch till results', status: 'investigating', createdAt: '2026-08-12' },
+  { id: 'qnc_0006', tenantId: TID, checkId: 'qch_0003', description: 'Packaging seal defect observed', severity: 'major', correctiveAction: 'Replace sealing equipment', status: 'open', createdAt: '2026-08-17' },
 ]);
 
 export default router;

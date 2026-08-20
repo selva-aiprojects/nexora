@@ -34,18 +34,62 @@ db.seed(COL.stock, [
   { id: 'stk_002', tenantId: TID, itemId: 'itm_002', warehouseId: 'wh_001', binId: 'bin_002', quantity: 640, batch: 'B25', serial: null },
   { id: 'stk_003', tenantId: TID, itemId: 'itm_003', warehouseId: 'wh_002', binId: 'bin_003', quantity: 80, batch: null, serial: null },
   { id: 'stk_004', tenantId: TID, itemId: 'itm_004', warehouseId: 'wh_001', binId: 'bin_001', quantity: 45, batch: null, serial: null },
+  { id: 'stk_005', tenantId: TID, itemId: 'itm_001', warehouseId: 'wh_002', binId: 'bin_003', quantity: 60, batch: 'B26', serial: null },
+  { id: 'stk_006', tenantId: TID, itemId: 'itm_002', warehouseId: 'wh_002', binId: 'bin_003', quantity: 200, batch: 'B27', serial: null },
+  { id: 'stk_007', tenantId: TID, itemId: 'itm_003', warehouseId: 'wh_001', binId: 'bin_002', quantity: 150, batch: null, serial: null },
+  { id: 'stk_008', tenantId: TID, itemId: 'itm_004', warehouseId: 'wh_002', binId: 'bin_003', quantity: 30, batch: 'B28', serial: null },
+  { id: 'stk_009', tenantId: TID, itemId: 'itm_001', warehouseId: 'wh_001', binId: 'bin_002', quantity: 85, batch: 'B29', serial: null },
+  { id: 'stk_010', tenantId: TID, itemId: 'itm_002', warehouseId: 'wh_001', binId: 'bin_001', quantity: 420, batch: 'B30', serial: null },
+  { id: 'stk_011', tenantId: TID, itemId: 'itm_003', warehouseId: 'wh_001', binId: 'bin_001', quantity: 95, batch: null, serial: null },
+  { id: 'stk_012', tenantId: TID, itemId: 'itm_004', warehouseId: 'wh_001', binId: 'bin_002', quantity: 55, batch: null, serial: null },
+  { id: 'stk_013', tenantId: TID, itemId: 'itm_001', warehouseId: 'wh_002', binId: null, quantity: 40, batch: 'B31', serial: null },
+  { id: 'stk_014', tenantId: TID, itemId: 'itm_002', warehouseId: 'wh_002', binId: null, quantity: 170, batch: 'B32', serial: null },
+  { id: 'stk_015', tenantId: TID, itemId: 'itm_003', warehouseId: 'wh_002', binId: null, quantity: 60, batch: null, serial: null },
+  { id: 'stk_016', tenantId: TID, itemId: 'itm_004', warehouseId: 'wh_001', binId: null, quantity: 25, batch: 'B33', serial: null },
+  { id: 'stk_017', tenantId: TID, itemId: 'itm_001', warehouseId: 'wh_001', binId: 'bin_001', quantity: 35, batch: 'B34', serial: 'SN-001-A' },
+  { id: 'stk_018', tenantId: TID, itemId: 'itm_002', warehouseId: 'wh_001', binId: 'bin_002', quantity: 280, batch: 'B35', serial: null },
+  { id: 'stk_019', tenantId: TID, itemId: 'itm_003', warehouseId: 'wh_002', binId: 'bin_003', quantity: 45, batch: null, serial: null },
+  { id: 'stk_020', tenantId: TID, itemId: 'itm_004', warehouseId: 'wh_002', binId: null, quantity: 20, batch: 'B36', serial: 'SN-004-B' },
+  { id: 'stk_021', tenantId: TID, itemId: 'itm_001', warehouseId: 'wh_002', binId: 'bin_003', quantity: 90, batch: 'B37', serial: null },
+  { id: 'stk_022', tenantId: TID, itemId: 'itm_002', warehouseId: 'wh_002', binId: null, quantity: 310, batch: 'B38', serial: null },
+  { id: 'stk_023', tenantId: TID, itemId: 'itm_003', warehouseId: 'wh_001', binId: 'bin_001', quantity: 110, batch: null, serial: null },
+  { id: 'stk_024', tenantId: TID, itemId: 'itm_004', warehouseId: 'wh_001', binId: null, quantity: 38, batch: 'B39', serial: null },
+  { id: 'stk_025', tenantId: TID, itemId: 'itm_001', warehouseId: 'wh_001', binId: 'bin_002', quantity: 72, batch: 'B40', serial: null },
+  { id: 'stk_026', tenantId: TID, itemId: 'itm_002', warehouseId: 'wh_001', binId: 'bin_001', quantity: 195, batch: 'B41', serial: null },
+  { id: 'stk_027', tenantId: TID, itemId: 'itm_003', warehouseId: 'wh_002', binId: null, quantity: 50, batch: null, serial: null },
+  { id: 'stk_028', tenantId: TID, itemId: 'itm_004', warehouseId: 'wh_002', binId: 'bin_003', quantity: 15, batch: 'B42', serial: null },
+  { id: 'stk_029', tenantId: TID, itemId: 'itm_001', warehouseId: 'wh_002', binId: null, quantity: 55, batch: 'B43', serial: null },
+  { id: 'stk_030', tenantId: TID, itemId: 'itm_002', warehouseId: 'wh_002', binId: 'bin_003', quantity: 240, batch: 'B44', serial: null },
 ]);
 
 db.seed(COL.adjustments, [
   { id: 'adj_001', tenantId: TID, itemId: 'itm_001', warehouseId: 'wh_001', binId: 'bin_001', type: 'write_off', qty: 10, reason: 'Damaged in transit', date: '2026-08-10' },
+  { id: 'adj_002', tenantId: TID, itemId: 'itm_002', warehouseId: 'wh_001', binId: 'bin_002', type: 'write_off', qty: 25, reason: 'Rust damage reported', date: '2026-07-22' },
+  { id: 'adj_003', tenantId: TID, itemId: 'itm_003', warehouseId: 'wh_002', binId: 'bin_003', type: 'write_back', qty: 5, reason: 'Count correction after audit', date: '2026-07-15' },
+  { id: 'adj_004', tenantId: TID, itemId: 'itm_004', warehouseId: 'wh_001', binId: 'bin_001', type: 'write_off', qty: 3, reason: 'Expired shelf life', date: '2026-06-28' },
+  { id: 'adj_005', tenantId: TID, itemId: 'itm_001', warehouseId: 'wh_002', binId: 'bin_003', type: 'write_off', qty: 8, reason: 'Theft suspected', date: '2026-06-10' },
+  { id: 'adj_006', tenantId: TID, itemId: 'itm_002', warehouseId: 'wh_002', binId: null, type: 'write_back', qty: 15, reason: 'System stock mismatch', date: '2026-05-20' },
 ]);
 
 db.seed(COL.transfers, [
   { id: 'trf_001', tenantId: TID, itemId: 'itm_001', fromWarehouseId: 'wh_001', toWarehouseId: 'wh_002', qty: 20, date: '2026-08-12', status: 'completed' },
+  { id: 'trf_002', tenantId: TID, itemId: 'itm_002', fromWarehouseId: 'wh_001', toWarehouseId: 'wh_002', qty: 50, date: '2026-08-05', status: 'completed' },
+  { id: 'trf_003', tenantId: TID, itemId: 'itm_003', fromWarehouseId: 'wh_002', toWarehouseId: 'wh_001', qty: 15, date: '2026-07-20', status: 'completed' },
+  { id: 'trf_004', tenantId: TID, itemId: 'itm_004', fromWarehouseId: 'wh_001', toWarehouseId: 'wh_002', qty: 10, date: '2026-07-10', status: 'completed' },
+  { id: 'trf_005', tenantId: TID, itemId: 'itm_001', fromWarehouseId: 'wh_002', toWarehouseId: 'wh_001', qty: 25, date: '2026-06-25', status: 'completed' },
+  { id: 'trf_006', tenantId: TID, itemId: 'itm_002', fromWarehouseId: 'wh_002', toWarehouseId: 'wh_001', qty: 80, date: '2026-06-15', status: 'completed' },
+  { id: 'trf_007', tenantId: TID, itemId: 'itm_004', fromWarehouseId: 'wh_002', toWarehouseId: 'wh_001', qty: 12, date: '2026-05-30', status: 'completed' },
+  { id: 'trf_008', tenantId: TID, itemId: 'itm_003', fromWarehouseId: 'wh_001', toWarehouseId: 'wh_002', qty: 30, date: '2026-05-12', status: 'completed' },
 ]);
 
 db.seed(COL.cycleCounts, [
   { id: 'cc_001', tenantId: TID, warehouseId: 'wh_001', binId: 'bin_001', itemId: 'itm_001', expectedQty: 120, countedQty: 118, variance: -2, countedOn: '2026-08-15', countedBy: 'Rahul Verma', status: 'closed' },
+  { id: 'cc_002', tenantId: TID, warehouseId: 'wh_001', binId: 'bin_002', itemId: 'itm_002', expectedQty: 640, countedQty: 642, variance: 2, countedOn: '2026-08-14', countedBy: 'Priya Nair', status: 'closed' },
+  { id: 'cc_003', tenantId: TID, warehouseId: 'wh_002', binId: 'bin_003', itemId: 'itm_003', expectedQty: 80, countedQty: 76, variance: -4, countedOn: '2026-08-12', countedBy: 'Arjun Singh', status: 'closed' },
+  { id: 'cc_004', tenantId: TID, warehouseId: 'wh_001', binId: 'bin_001', itemId: 'itm_004', expectedQty: 45, countedQty: 45, variance: 0, countedOn: '2026-07-28', countedBy: 'Rahul Verma', status: 'closed' },
+  { id: 'cc_005', tenantId: TID, warehouseId: 'wh_002', binId: 'bin_003', itemId: 'itm_001', expectedQty: 60, countedQty: 58, variance: -2, countedOn: '2026-07-20', countedBy: 'Arjun Singh', status: 'closed' },
+  { id: 'cc_006', tenantId: TID, warehouseId: 'wh_001', binId: 'bin_002', itemId: 'itm_003', expectedQty: 150, countedQty: 152, variance: 2, countedOn: '2026-07-15', countedBy: 'Priya Nair', status: 'open' },
+  { id: 'cc_007', tenantId: TID, warehouseId: 'wh_002', binId: null, itemId: 'itm_004', expectedQty: 30, countedQty: 30, variance: 0, countedOn: '2026-06-30', countedBy: 'Arjun Singh', status: 'closed' },
 ]);
 
 // Warehouses

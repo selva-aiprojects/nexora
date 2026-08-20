@@ -39,22 +39,59 @@ db.seed(COL.stock, [
 ]);
 db.seed(COL.prs, [
   { id: 'pr_0001', tenantId: TID, number: 'PR-2026-001', itemId: 'itm_001', qty: 500, requiredBy: '2026-09-01', status: 'approved' },
+  { id: 'pr_0002', tenantId: TID, number: 'PR-2026-002', itemId: 'itm_002', qty: 200, requiredBy: '2026-09-15', status: 'approved' },
+  { id: 'pr_0003', tenantId: TID, number: 'PR-2026-003', itemId: 'itm_005', qty: 300, requiredBy: '2026-08-30', status: 'pending' },
+  { id: 'pr_0004', tenantId: TID, number: 'PR-2026-004', itemId: 'itm_001', qty: 400, requiredBy: '2026-10-01', status: 'approved' },
+  { id: 'pr_0005', tenantId: TID, number: 'PR-2026-005', itemId: 'itm_006', qty: 150, requiredBy: '2026-09-20', status: 'pending' },
 ]);
 db.seed(COL.pos, [
   { id: 'po_0001', tenantId: TID, number: 'PO-2026-001', vendorId: 'ven_001', itemId: 'itm_001', qty: 500, rate: 415, status: 'open' },
+  { id: 'po_0002', tenantId: TID, number: 'PO-2026-002', vendorId: 'ven_002', itemId: 'itm_002', qty: 200, rate: 178, status: 'open' },
+  { id: 'po_0003', tenantId: TID, number: 'PO-2026-003', vendorId: 'ven_001', itemId: 'itm_001', qty: 400, rate: 405, status: 'received' },
+  { id: 'po_0004', tenantId: TID, number: 'PO-2026-004', vendorId: 'ven_002', itemId: 'itm_005', qty: 300, rate: 520, status: 'open' },
+  { id: 'po_0005', tenantId: TID, number: 'PO-2026-005', vendorId: 'ven_001', itemId: 'itm_006', qty: 150, rate: 890, status: 'received' },
 ]);
 db.seed(COL.grs, [
-  { id: 'gr_0001', tenantId: TID, poId: 'po_0001', qty: 0, date: null },
+  { id: 'gr_0001', tenantId: TID, poId: 'po_0001', qty: 500, date: '2026-08-12' },
+  { id: 'gr_0002', tenantId: TID, poId: 'po_0002', qty: 180, date: '2026-08-18' },
+  { id: 'gr_0003', tenantId: TID, poId: 'po_0003', qty: 400, date: '2026-07-25' },
+  { id: 'gr_0004', tenantId: TID, poId: 'po_0005', qty: 150, date: '2026-07-10' },
 ]);
 db.seed(COL.boms, [
   { id: 'bom_001', tenantId: TID, name: 'Industrial Pump BOM', finishedItemId: 'itm_004', components: [{ itemId: 'itm_003', qty: 1 }, { itemId: 'itm_002', qty: 12 }] },
+  { id: 'bom_002', tenantId: TID, name: 'Control Panel BOM', finishedItemId: 'itm_005', components: [{ itemId: 'itm_001', qty: 8 }, { itemId: 'itm_006', qty: 2 }] },
+  { id: 'bom_003', tenantId: TID, name: 'Valve Assembly BOM', finishedItemId: 'itm_006', components: [{ itemId: 'itm_002', qty: 5 }, { itemId: 'itm_001', qty: 3 }] },
 ]);
 db.seed(COL.pos_order, [
   { id: 'poord_001', tenantId: TID, number: 'PROD-2026-001', bomId: 'bom_001', finishedItemId: 'itm_004', qty: 20, status: 'planned', stage: 'Planning' },
+  { id: 'poord_002', tenantId: TID, number: 'PROD-2026-002', bomId: 'bom_001', finishedItemId: 'itm_004', qty: 15, status: 'in-progress', stage: 'WIP' },
+  { id: 'poord_003', tenantId: TID, number: 'PROD-2026-003', bomId: 'bom_001', finishedItemId: 'itm_004', qty: 25, status: 'completed', stage: 'Finished Goods' },
+  { id: 'poord_004', tenantId: TID, number: 'PROD-2026-004', bomId: 'bom_002', finishedItemId: 'itm_005', qty: 30, status: 'in-progress', stage: 'WIP' },
+  { id: 'poord_005', tenantId: TID, number: 'PROD-2026-005', bomId: 'bom_002', finishedItemId: 'itm_005', qty: 10, status: 'completed', stage: 'Finished Goods' },
+  { id: 'poord_006', tenantId: TID, number: 'PROD-2026-006', bomId: 'bom_003', finishedItemId: 'itm_006', qty: 50, status: 'planned', stage: 'Planning' },
+  { id: 'poord_007', tenantId: TID, number: 'PROD-2026-007', bomId: 'bom_003', finishedItemId: 'itm_006', qty: 40, status: 'cancelled', stage: 'Planning' },
+  { id: 'poord_008', tenantId: TID, number: 'PROD-2026-008', bomId: 'bom_001', finishedItemId: 'itm_004', qty: 18, status: 'in-progress', stage: 'WIP' },
+  { id: 'poord_009', tenantId: TID, number: 'PROD-2026-009', bomId: 'bom_002', finishedItemId: 'itm_005', qty: 25, status: 'planned', stage: 'Planning' },
+  { id: 'poord_010', tenantId: TID, number: 'PROD-2026-010', bomId: 'bom_003', finishedItemId: 'itm_006', qty: 60, status: 'completed', stage: 'Finished Goods' },
+  { id: 'poord_011', tenantId: TID, number: 'PROD-2026-011', bomId: 'bom_001', finishedItemId: 'itm_004', qty: 12, status: 'cancelled', stage: 'Planning' },
+  { id: 'poord_012', tenantId: TID, number: 'PROD-2026-012', bomId: 'bom_002', finishedItemId: 'itm_005', qty: 35, status: 'in-progress', stage: 'WIP' },
+  { id: 'poord_013', tenantId: TID, number: 'PROD-2026-013', bomId: 'bom_003', finishedItemId: 'itm_006', qty: 45, status: 'completed', stage: 'Finished Goods' },
+  { id: 'poord_014', tenantId: TID, number: 'PROD-2026-014', bomId: 'bom_001', finishedItemId: 'itm_004', qty: 22, status: 'planned', stage: 'Planning' },
+  { id: 'poord_015', tenantId: TID, number: 'PROD-2026-015', bomId: 'bom_002', finishedItemId: 'itm_005', qty: 20, status: 'completed', stage: 'Finished Goods' },
 ]);
 db.seed(COL.ledger, [
   { id: 'sl_001', tenantId: TID, itemId: 'itm_001', date: '2026-07-01', type: 'in', qty: 620, balance: 620, reference: 'Opening' },
   { id: 'sl_002', tenantId: TID, itemId: 'itm_001', date: '2026-08-10', type: 'out', qty: 500, balance: 120, reference: 'Issue PROD-2026-000' },
+  { id: 'sl_003', tenantId: TID, itemId: 'itm_001', date: '2026-07-15', type: 'out', qty: 120, balance: 500, reference: 'Transfer TRF-001' },
+  { id: 'sl_004', tenantId: TID, itemId: 'itm_002', date: '2026-07-01', type: 'in', qty: 900, balance: 900, reference: 'Opening' },
+  { id: 'sl_005', tenantId: TID, itemId: 'itm_002', date: '2026-08-05', type: 'out', qty: 260, balance: 640, reference: 'Issue PROD-2026-001' },
+  { id: 'sl_006', tenantId: TID, itemId: 'itm_003', date: '2026-07-01', type: 'in', qty: 150, balance: 150, reference: 'Opening' },
+  { id: 'sl_007', tenantId: TID, itemId: 'itm_003', date: '2026-07-20', type: 'out', qty: 70, balance: 80, reference: 'Transfer TRF-003' },
+  { id: 'sl_008', tenantId: TID, itemId: 'itm_004', date: '2026-07-01', type: 'in', qty: 60, balance: 60, reference: 'Opening' },
+  { id: 'sl_009', tenantId: TID, itemId: 'itm_004', date: '2026-08-01', type: 'out', qty: 15, balance: 45, reference: 'Issue PROD-2026-002' },
+  { id: 'sl_010', tenantId: TID, itemId: 'itm_005', date: '2026-07-01', type: 'in', qty: 50, balance: 50, reference: 'Opening' },
+  { id: 'sl_011', tenantId: TID, itemId: 'itm_006', date: '2026-07-01', type: 'in', qty: 80, balance: 80, reference: 'Opening' },
+  { id: 'sl_012', tenantId: TID, itemId: 'itm_006', date: '2026-08-15', type: 'out', qty: 20, balance: 60, reference: 'Issue PROD-2026-005' },
 ]);
 
 // ----------------------------- Helpers -----------------------------

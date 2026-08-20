@@ -70,7 +70,7 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
 });
 
 // Serve frontend static files in production (Vercel serverless)
-const frontendDist = path.resolve(process.cwd(), '..', 'frontend', 'dist');
+const frontendDist = path.resolve(process.cwd(), 'public');
 if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
   app.get('*', (_req, res) => {

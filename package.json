@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build",
-    "vercel-build": "cd server && npm install && npx tsc -p tsconfig.json"
+    "build": "cd frontend && npm install && npm run build && cd .. && node scripts/copy-frontend.mjs && cd server && npm install && npx tsc -p tsconfig.json"
   }
 }

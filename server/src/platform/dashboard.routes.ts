@@ -30,7 +30,7 @@ router.get(
     const itemCost = new Map(items.map((it) => [it.id, it.standardCost]));
     const inventory = stock.reduce((s, st) => s + st.quantity * (itemCost.get(st.itemId) ?? 0), 0);
 
-    const lastPayroll = payrollRuns.slice().sort((a, b) => b.periodEnd.localeCompare(a.periodEnd))[0];
+    const lastPayroll = payrollRuns.slice().sort((a, b) => (b.periodEnd || '').localeCompare(a.periodEnd || ''))[0];
     const payroll = lastPayroll?.totalNet ?? 0;
 
     const overdue = sales.filter((i) => i.status === 'overdue').length;
@@ -440,8 +440,8 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         })),
       };
       data.tables = {
-        recentLeads: leads.slice().sort((a, b) => b.expectedCloseDate.localeCompare(a.expectedCloseDate)).slice(0, 5),
-        recentOrders: salesOrders.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
+        recentLeads: leads.slice().sort((a, b) => (b.expectedCloseDate || '').localeCompare(a.expectedCloseDate || '')).slice(0, 5),
+        recentOrders: salesOrders.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 5),
       };
       break;
     }
@@ -525,7 +525,7 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         })),
       };
       data.tables = {
-        recentOrders: productionOrders.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5),
+        recentOrders: productionOrders.slice().sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, 5),
       };
       break;
     }

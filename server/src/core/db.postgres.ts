@@ -1,12 +1,18 @@
 import { Pool } from 'pg';
+import type { Store } from './db.js';
 
-export class PostgresStore {
+export class PostgresStore implements Store {
   private pool: Pool;
   private initialized = new Set<string>();
 
   constructor(connectionString: string) {
+    const url = new URL(connectionString);
     this.pool = new Pool({
-      connectionString,
+      host: url.hostname,
+      port: parseInt(url.port) || 5432,
+      database: url.pathname.slice(1),
+      user: url.username,
+      password: url.password,
       ssl: { rejectUnauthorized: false },
     });
   }
@@ -22,7 +28,7 @@ export class PostgresStore {
       )
     `);
     await this.pool.query(`
-      CREATE INDEX IF NOT EXISTS "${t}_tenant_idx" ON "${t}"(tenantId)
+      CREATE INDEX IF NOT EXISTS "${t}_tenant_idx" ON "${t}"("tenantId")
     `);
     this.initialized.add(name);
   }

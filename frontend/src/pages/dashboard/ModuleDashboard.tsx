@@ -61,10 +61,10 @@ function TrendIndicator({ value, suffix = '%' }: { value: number; suffix?: strin
 
 function KpiCard({ label, value, trend, suffix = '' }: { label: string; value: string; trend?: number; suffix?: string }) {
   return (
-    <Card padding="md">
-      <div className="text-xs font-medium uppercase tracking-wide text-ink-muted">{label}</div>
-      <div className="mt-2 flex items-baseline gap-2">
-        <div className="text-2xl font-semibold text-ink tabular-nums">{value}</div>
+    <Card padding="sm">
+      <div className="text-[10px] font-medium uppercase tracking-wide text-ink-muted">{label}</div>
+      <div className="mt-1 flex items-baseline gap-1">
+        <div className="text-lg font-semibold text-ink tabular-nums">{value}</div>
         {trend !== undefined && <TrendIndicator value={trend} suffix={suffix} />}
       </div>
     </Card>
@@ -258,9 +258,9 @@ export default function ModuleDashboard({ module }: { module: string }) {
       }
 
       return (
-        <Card key={chartKey} padding="md">
-          <h3 className="font-display text-base font-semibold text-ink capitalize">{chartKey.replace(/([A-Z])/g, ' $1')}</h3>
-          <div className="mt-4">{chartComponent}</div>
+        <Card key={chartKey} padding="sm">
+          <h3 className="font-display text-sm font-semibold text-ink capitalize">{chartKey.replace(/([A-Z])/g, ' $1')}</h3>
+          <div className="mt-2">{chartComponent}</div>
         </Card>
       );
     });
@@ -303,20 +303,20 @@ export default function ModuleDashboard({ module }: { module: string }) {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-4">
       <div className="flex items-center justify-between">
         <PageHeader title={meta.title} subtitle={meta.description} />
         <div className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.accent }} />
       </div>
 
       {Object.keys(kpis).length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {renderKpis()}
         </div>
       )}
 
       {Object.keys(charts).length > 0 && Object.keys(tables).length > 0 ? (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           {renderCharts()}
           {renderTables()}
         </div>

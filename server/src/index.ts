@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { ApiError } from './core/errors.js';
 import authRoutes from './platform/auth.routes.js';
+import usersRoutes from './platform/users.routes.js';
 import auditRoutes from './platform/audit.routes.js';
 import notificationRoutes from './platform/notifications.routes.js';
 import searchRoutes from './platform/search.routes.js';
@@ -29,6 +30,7 @@ app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'nexora-serv
 
 // ---- Platform (cross-cutting) ----
 app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/search', searchRoutes);

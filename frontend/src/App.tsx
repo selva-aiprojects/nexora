@@ -64,6 +64,8 @@ import ProjectReportsPage from '@/pages/projects/Reports';
 import InspectionPlansPage from '@/pages/quality/InspectionPlans';
 import QCChecksPage from '@/pages/quality/Checks';
 import NonConformancesPage from '@/pages/quality/NonConformances';
+import UsersPage from '@/pages/admin/Users';
+import RolesPage from '@/pages/admin/Roles';
 
 function useActiveNav() {
   const location = useLocation();
@@ -192,6 +194,13 @@ function useActiveNav() {
         { label: 'Inspection Plans', to: '/quality/inspection-plans', active: isActive('/quality/inspection-plans') },
         { label: 'QC Checks', to: '/quality/checks', active: isActive('/quality/checks') },
         { label: 'Non-Conformances', to: '/quality/non-conformances', active: isActive('/quality/non-conformances') },
+      ],
+    },
+    {
+      title: 'Admin',
+      items: [
+        { label: 'Users', to: '/admin/users', active: isActive('/admin/users') },
+        { label: 'Roles & Permissions', to: '/admin/roles', active: isActive('/admin/roles') },
       ],
     },
   ];
@@ -351,6 +360,8 @@ function App() {
         <Route path="/quality/inspection-plans" element={<InspectionPlansPage />} />
         <Route path="/quality/checks" element={<QCChecksPage />} />
         <Route path="/quality/non-conformances" element={<NonConformancesPage />} />
+        <Route path="/admin/users" element={<UsersPage />} />
+        <Route path="/admin/roles" element={<RolesPage />} />
       </Routes>
     </AppShell>
   );

@@ -1051,6 +1051,26 @@ export interface QCNonConformance {
   createdAt: string;
 }
 
+export interface UserRow {
+  id: string;
+  tenantId: string;
+  name: string;
+  email: string;
+  role: string;
+  employeeId?: string;
+  module?: string;
+  status: string;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RoleOption {
+  key: string;
+  label: string;
+  permissions: string[];
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<LoginResponse>('/auth/login', {
@@ -1879,6 +1899,54 @@ export const api = {
     request<Notification>(`/notifications/${encodeURIComponent(id)}/read`, {
       method: 'POST',
     }),
+
+  getUsers: (params?: { role?: string; status?: string; search?: string; page?: number; pageSize?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.role) qs.set('role', params.role);
+    if (params?.status) qs.set('status', params.status);
+    if (params?.search) qs.set('search', params.search);
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.pageSize) qs.set('pageSize', String(params.pageSize));
+    const q = qs.toString();
+    return request<ListResult<UserRow>>(`/users${q ? `?${q}` : ''}`);
+  },
+
+  getUser: (id: string) => request<UserRow>(`/users/${encodeURIComponent(id)}`),
+
+  createUser: (body: { name: string; email: string; password: string; role: string; employeeId?: string; status?: string; module?: string }) =>
+    request<UserRow>('/users', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateUser: (id: string, body: Partial<{ name: string; email: string; password: string; role: string; employeeId?: string; status?: string; module?: string }>) =>
+    request<UserRow>(`/users/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  deleteUser: (id: string) =>
+    request<void>(`/users/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+
+  activateUser: (id: string) =>
+    request<UserRow>(`/users/${encodeURIComponent(id)}/activate`, {
+      method: 'POST',
+    }),
+
+  suspendUser: (id: string) =>
+    request<UserRow>(`/users/${encodeURIComponent(id)}/suspend`, {
+      method: 'POST',
+    }),
+
+  resetUserPassword: (id: string, password: string) =>
+    request<UserRow>(`/users/${encodeURIComponent(id)}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    }),
+
+  getRoles: () => request<{ roles: RoleOption[] }>('/users/roles'),
 };
 
 export function getStoredToken(): string | null {

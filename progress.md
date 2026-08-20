@@ -19,7 +19,7 @@
 - **Project Accounting**: projects, WBS, time entries, budgets, project P&L reports
 - **Quality Control**: inspection plans, QC checks, non-conformances, severity tracking
 - **Theme system**: Intelligent Indigo palette, light/dark mode, module accents, brand gradients
-- **Module Dashboards**: per-module dashboard APIs (sales, finance, procurement, inventory, crm, hrms) with KPIs, charts, tables
+- **Module Dashboards**: per-module dashboard APIs (sales, finance, procurement, inventory, crm, hrms, manufacturing) with comprehensive KPIs matching industry ERP standards
 
 #### Frontend (React + Vite + Tailwind)
 - **Routing**: react-router-dom with all module routes

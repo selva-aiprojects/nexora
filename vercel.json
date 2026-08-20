@@ -3,18 +3,18 @@
   "buildCommand": "npm install --prefix frontend && npm run build --prefix frontend",
   "outputDirectory": "frontend/dist",
   "functions": {
-    "server/api/index.ts": {
-      "includeFiles": "server/src/**"
+    "api/index.ts": {
+      "includeFiles": "server/**"
     }
   },
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "server/api/index.ts"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/health",
-      "dest": "server/api/index.ts"
+      "dest": "/api/index.ts"
     },
     {
       "handle": "filesystem"

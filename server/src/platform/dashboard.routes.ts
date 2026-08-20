@@ -202,7 +202,7 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         })),
       };
       data.tables = {
-        recentInvoices: sales.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
+        recentInvoices: sales.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 5),
         topCustomers: customers.slice().sort((a, b) => (b.outstanding ?? 0) - (a.outstanding ?? 0)).slice(0, 5),
         openQuotes: quotes.filter((q) => q.status === 'draft' || q.status === 'sent').slice(0, 5),
       };
@@ -272,7 +272,7 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         })),
       };
       data.tables = {
-        recentGST: gst.slice().sort((a, b) => b.period.localeCompare(a.period)).slice(0, 5),
+        recentGST: gst.slice().sort((a, b) => (b.period || '').localeCompare(a.period || '')).slice(0, 5),
         bankBalances: banks,
       };
       break;
@@ -327,7 +327,7 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         })),
       };
       data.tables = {
-        recentQuotes: quotes.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
+        recentQuotes: quotes.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 5),
         activeContracts: contracts.filter((c) => c.status === 'active').slice(0, 5),
       };
       break;
@@ -409,9 +409,8 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       const churnRate = customers.length > 0 ? (lostLeads.length / Math.max(1, customers.length)) * 100 : 0;
       const avgOrderValue = salesOrders.length > 0 ? salesOrders.reduce((s, o) => s + o.total, 0) / salesOrders.length : 0;
       const openOpportunities = quotes.filter((q) => q.status === 'draft' || q.status === 'sent').reduce((s, q) => s + q.total, 0);
-      const marketingSpend = sales.reduce((s, i) => s + (i.discount || 0), 0);
       const newCustomers = customers.filter((c) => new Date(c.createdAt) >= new Date('2026-06-01')).length;
-      const cac = newCustomers > 0 ? marketingSpend / newCustomers : 0;
+      const cac = newCustomers > 0 ? Math.round(openOpportunities / newCustomers) : 0;
 
       data.kpis = {
         customerCount: customers.length,
@@ -488,7 +487,7 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         })),
       };
       data.tables = {
-        recentAttendance: attendance.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
+        recentAttendance: attendance.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 5),
         pendingLeaves: leaveApps.filter((l) => l.status === 'pending').slice(0, 5),
       };
       break;

@@ -19,13 +19,13 @@
 - **Project Accounting**: projects, WBS, time entries, budgets, project P&L reports
 - **Quality Control**: inspection plans, QC checks, non-conformances, severity tracking
 - **Theme system**: Intelligent Indigo palette, light/dark mode, module accents, brand gradients
-- **Module Dashboards**: per-module dashboard APIs (sales, finance, procurement, inventory, crm, hrms, manufacturing) with comprehensive KPIs matching industry ERP standards
+- **Module Dashboards**: per-module dashboard APIs (sales, finance, procurement, inventory, crm, hrms, manufacturing) with comprehensive KPIs matching industry ERP standards, enhanced charts (donut, multi-line, bar, area), and inline metrics tables
 
 #### Frontend (React + Vite + Tailwind)
 - **Routing**: react-router-dom with all module routes
 - **Components**: Button, Badge, Card, DataTable, FormField, Modal, Toast, AppShell, PageHeader, ConfirmDialog, ThemeToggle, FilterBar, TableToolbar
 - **Pages**: Dashboard (module-specific with slider for superadmin), Accounting (7), HRMS (5), Manufacturing (6), Inventory (3), Procurement (4), Projects (5), Quality (3), CRM (4), Compliance (2), DMS (1), ESS (5), AI (5)
-- **Charts**: Revenue trend, stock by warehouse, low-stock alerts (recharts)
+- **Charts**: Revenue trend, stock by warehouse, AR aging, status breakdown, donut charts, multi-line charts, bar charts, inline metrics tables (recharts)
 - **Theme**: CSS variables for Intelligent Indigo, dark mode toggle, brand gradient utilities, module accent colors
 - **Branding**: logo.png + Tagline.png in sidebar header, favicon.png
 - **Validation**: Zod schemas for sales invoices, purchase invoices, employees, customers, vendors, projects

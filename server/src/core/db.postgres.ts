@@ -1,11 +1,11 @@
-import neon from 'neon-serverless';
+import { neon } from '@neondatabase/serverless';
 
 export class PostgresStore {
-  private sql: ReturnType<typeof neon.neon>;
+  private sql: ReturnType<typeof neon>;
   private initialized = new Set<string>();
 
   constructor(connectionString: string) {
-    this.sql = neon.neon(connectionString);
+    this.sql = neon(connectionString);
   }
 
   private async ensureTable(name: string) {
@@ -28,7 +28,7 @@ export class PostgresStore {
     await this.ensureTable(name);
     const sanitized = name.replace(/[^a-zA-Z0-9_]/g, '_');
     const rows = await this.sql`SELECT data FROM ${sanitized}`;
-    return (rows as any[]).map((r: any) => r.data);
+    return rows as any[];
   }
 
   async seed(name: string, rows: any[]): Promise<void> {
@@ -44,21 +44,21 @@ export class PostgresStore {
 
   async nextId(prefix: string, name: string): Promise<string> {
     const sanitized = name.replace(/[^a-zA-Z0-9_]/g, '_');
-    const result = (await this.sql`SELECT COUNT(*) as cnt FROM ${sanitized}`) as any[];
-    const n = parseInt(result[0].cnt, 10) + 1;
+    const result = await this.sql`SELECT COUNT(*) as cnt FROM ${sanitized}`;
+    const n = parseInt((result as any[])[0].cnt, 10) + 1;
     return `${prefix}-${String(n).padStart(5, '0')}`;
   }
 
   async all(tenantId: string, name: string): Promise<any[]> {
     await this.ensureTable(name);
     const sanitized = name.replace(/[^a-zA-Z0-9_]/g, '_');
-    const rows = (await this.sql`SELECT data FROM ${sanitized} WHERE tenantId = ${tenantId}`) as any[];
-    return rows.map((r: any) => r.data);
+    const rows = await this.sql`SELECT data FROM ${sanitized} WHERE tenantId = ${tenantId}`;
+    return rows as any[];
   }
 
   async byId(tenantId: string, name: string, id: string): Promise<any | undefined> {
     const rows = await this.all(tenantId, name);
-    return rows.find((r: any) => r.id === id);
+    return (rows as any[]).find((r: any) => r.id === id);
   }
 
   async insert(tenantId: string, name: string, row: any): Promise<any> {
@@ -87,12 +87,12 @@ export class PostgresStore {
   async remove(tenantId: string, name: string, id: string): Promise<boolean> {
     await this.ensureTable(name);
     const sanitized = name.replace(/[^a-zA-Z0-9_]/g, '_');
-    const result = (await this.sql`DELETE FROM ${sanitized} WHERE id = ${id} AND tenantId = ${tenantId}`) as any[];
-    return (result[0]?.rowCount ?? 0) > 0;
+    const result = await this.sql`DELETE FROM ${sanitized} WHERE id = ${id} AND tenantId = ${tenantId}`;
+    return ((result as any[])[0]?.rowCount ?? 0) > 0;
   }
 
   async query(tenantId: string, name: string, predicate: (row: any) => boolean): Promise<any[]> {
     const rows = await this.all(tenantId, name);
-    return rows.filter(predicate);
+    return (rows as any[]).filter(predicate);
   }
 }

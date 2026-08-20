@@ -42,6 +42,8 @@ export interface DataTableProps<T> {
     onPageChange: (page: number) => void;
   };
   caption: string;
+  /** Limit visible columns by key. When omitted, all columns render. */
+  visibleColumns?: Set<string>;
   className?: string;
 }
 
@@ -85,9 +87,14 @@ export function DataTable<T>({
   onSelectionChange,
   pagination,
   caption,
+  visibleColumns,
   className,
 }: DataTableProps<T>) {
   const selectable = !!onSelectionChange;
+  const visible = React.useMemo(
+    () => (visibleColumns ? columns.filter((c) => visibleColumns.has(c.key)) : columns),
+    [columns, visibleColumns]
+  );
   const allIds = React.useMemo(() => data.map(getRowId), [data, getRowId]);
   const allSelected = selectable && allIds.length > 0 && allIds.every((id) => selectedIds?.has(id));
   const someSelected = selectable && allIds.some((id) => selectedIds?.has(id)) && !allSelected;
@@ -131,7 +138,7 @@ export function DataTable<T>({
                   />
                 </th>
               )}
-              {columns.map((col) => {
+              {visible.map((col) => {
                 const isSorted = sortKey === col.key;
                 return (
                   <th
@@ -167,7 +174,7 @@ export function DataTable<T>({
           </thead>
 
           {isLoading ? (
-            <SkeletonTableRows rows={pagination?.pageSize ?? 6} columns={columns.length + (selectable ? 1 : 0)} />
+            <SkeletonTableRows rows={pagination?.pageSize ?? 6} columns={visible.length + (selectable ? 1 : 0)} />
           ) : (
             <tbody>
               {data.map((row) => {
@@ -194,7 +201,7 @@ export function DataTable<T>({
                         />
                       </td>
                     )}
-                    {columns.map((col) => (
+                    {visible.map((col) => (
                       <td
                         key={col.key}
                         className={cn(

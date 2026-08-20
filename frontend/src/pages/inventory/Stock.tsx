@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Button, Card, DataTable, PageHeader, Modal, FormField, Select, TextArea, TextField, type Column, useToast } from '@/components';
+import { Button, Card, DataTable, Modal, FormField, Select, TextArea, TextField, type Column, useToast } from '@/components';
 import { api } from '@/lib/api';
+import { TableToolbar } from '@/components/toolbar/TableToolbar';
 
 function InventoryStock() {
   const { notify } = useToast();
@@ -11,6 +12,7 @@ function InventoryStock() {
   const [bins, setBins] = React.useState<any[]>([]);
   const [filterWarehouse, setFilterWarehouse] = React.useState('');
   const [filterBin, setFilterBin] = React.useState('');
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [adjustOpen, setAdjustOpen] = React.useState(false);
   const [transferOpen, setTransferOpen] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
@@ -95,17 +97,24 @@ function InventoryStock() {
   if (error) return <div className="p-6 text-sm text-danger">{error}</div>;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <PageHeader
-        title="Inventory Stock"
-        subtitle="Bin-level stock across warehouses with adjustments and transfers."
-        actions={
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setAdjustOpen(true)}>Adjustment</Button>
-            <Button onClick={() => setTransferOpen(true)}>Transfer</Button>
-          </div>
-        }
-      />
+    <TableToolbar
+      title="Inventory Stock"
+      subtitle="Bin-level stock across warehouses with adjustments and transfers."
+      data={rows}
+      columns={columns}
+      filename="inventory-stock"
+      selectedIds={selectedIds}
+      onSelectionClear={() => setSelectedIds(new Set())}
+      bulkActions={[
+        { label: 'Export selected', onClick: () => { /* export selectedIds */ } },
+      ]}
+      extraActions={
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setAdjustOpen(true)}>Adjustment</Button>
+          <Button onClick={() => setTransferOpen(true)}>Transfer</Button>
+        </div>
+      }
+    >
       <Card>
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField label="Warehouse" htmlFor="inv-wh">
@@ -121,6 +130,8 @@ function InventoryStock() {
         columns={columns}
         data={rows}
         getRowId={(row) => row.id}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
         emptyTitle="No stock records"
         emptyDescription="Stock movements will appear here."
       />
@@ -173,7 +184,7 @@ function InventoryStock() {
           </FormField>
         </form>
       </Modal>
-    </div>
+    </TableToolbar>
   );
 }
 

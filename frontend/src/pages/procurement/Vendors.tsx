@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Badge, Button, DataTable, PageHeader, Modal, FormField, Select, TextField, type Column, useToast } from '@/components';
+import { Badge, Button, DataTable, Modal, FormField, Select, TextField, type Column, useToast } from '@/components';
 import { api } from '@/lib/api';
+import { TableToolbar } from '@/components/toolbar/TableToolbar';
 
 const CATEGORIES = [
   { value: 'raw_material', label: 'Raw Material' },
@@ -21,6 +22,8 @@ function ProcurementVendors() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [rows, setRows] = React.useState<any[]>([]);
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [filters, setFilters] = React.useState<{ search?: string; status?: string }>({});
   const [open, setOpen] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
 
@@ -28,11 +31,21 @@ function ProcurementVendors() {
     let cancelled = false;
     setLoading(true);
     api.getProcurementVendors()
-      .then((res) => { if (!cancelled) setRows(res.rows ?? []); })
+      .then((res) => {
+        if (!cancelled) {
+          let data = res.rows ?? [];
+          if (filters.status) data = data.filter((r) => r.status === filters.status);
+          if (filters.search) {
+            const q = filters.search.toLowerCase();
+            data = data.filter((r) => r.name.toLowerCase().includes(q) || r.category.toLowerCase().includes(q));
+          }
+          setRows(data);
+        }
+      })
       .catch((err) => { if (!cancelled) setError(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [filters]);
 
   React.useEffect(() => { load(); }, [load]);
 
@@ -75,13 +88,39 @@ function ProcurementVendors() {
   if (error) return <div className="p-6 text-sm text-danger">{error}</div>;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <PageHeader title="Vendors" subtitle="Vendor master with ratings, categories and payment terms." actions={<Button onClick={() => setOpen(true)}>Add Vendor</Button>} />
+    <TableToolbar
+      title="Vendors"
+      subtitle="Vendor master with ratings, categories and payment terms."
+      data={rows}
+      columns={columns}
+      filename="vendors"
+      filters={filters}
+      onFiltersChange={setFilters}
+      onReset={() => setFilters({})}
+      showFilterBar
+      filterProps={{
+        searchPlaceholder: 'Search vendors...',
+        showStatus: true,
+        statusOptions: [
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+          { value: 'suspended', label: 'Suspended' },
+        ],
+      }}
+      selectedIds={selectedIds}
+      onSelectionClear={() => setSelectedIds(new Set())}
+      bulkActions={[
+        { label: 'Export selected', onClick: () => { /* export selectedIds */ } },
+      ]}
+      extraActions={<Button onClick={() => setOpen(true)}>Add Vendor</Button>}
+    >
       <DataTable
         caption="Vendors"
         columns={columns}
         data={rows}
         getRowId={(row) => row.id}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
         emptyTitle="No vendors"
         emptyDescription="Add your first vendor to get started."
       />
@@ -108,7 +147,7 @@ function ProcurementVendors() {
           </div>
         </form>
       </Modal>
-    </div>
+    </TableToolbar>
   );
 }
 

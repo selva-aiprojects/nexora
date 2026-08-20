@@ -8,7 +8,6 @@ import {
   EmptyState,
   FormField,
   Modal,
-  PageHeader,
   Select,
   SkeletonText,
   TextField,
@@ -16,6 +15,8 @@ import {
   formatINR,
 } from '@/components';
 import { api, type Customer, type SalesInvoice } from '@/lib/api';
+import { exportTableToCSV } from '@/lib/export';
+import { TableToolbar } from '@/components/toolbar/TableToolbar';
 
 const STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
   paid: 'success',
@@ -52,6 +53,9 @@ export default function SalesInvoices() {
   const [invoices, setInvoices] = React.useState<SalesInvoice[]>([]);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
 
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [filters, setFilters] = React.useState<{ search?: string; status?: string }>({});
+
   const [createOpen, setCreateOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [form, setForm] = React.useState({ customerId: '', date: today(), dueDate: today(), lines: [] as LineItem[] });
@@ -66,14 +70,20 @@ export default function SalesInvoices() {
     setError(null);
     return Promise.all([api.getSalesInvoices({ pageSize: 100 }), api.getCustomers()])
       .then(([inv, cus]) => {
-        setInvoices(inv.rows ?? []);
+        let rows = inv.rows ?? [];
+        if (filters.status) rows = rows.filter((r) => r.status === filters.status);
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          rows = rows.filter((r) => r.number.toLowerCase().includes(q) || r.customerName.toLowerCase().includes(q));
+        }
+        setInvoices(rows);
         setCustomers(cus.rows ?? []);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }
 
-  React.useEffect(() => { load(); }, []);
+  React.useEffect(() => { load(); }, [filters]);
 
   function openCreate() {
     setForm({ customerId: customers[0]?.id ?? '', date: today(), dueDate: today(), lines: [emptyLine()] });
@@ -193,13 +203,34 @@ export default function SalesInvoices() {
   const outstanding = detail ? Math.max(0, detail.total - (detail.paid ?? 0)) : 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <PageHeader
-        title="Sales invoices"
-        subtitle="Raise customer invoices and record the payments you receive."
-        actions={<Button onClick={openCreate}>+ New invoice</Button>}
-      />
-
+    <TableToolbar
+      title="Sales invoices"
+      subtitle="Raise customer invoices and record the payments you receive."
+      data={invoices}
+      columns={columns}
+      filename="sales-invoices"
+      filters={filters}
+      onFiltersChange={setFilters}
+      onReset={() => setFilters({})}
+      showFilterBar
+      filterProps={{
+        searchPlaceholder: 'Search invoices...',
+        showStatus: true,
+        statusOptions: [
+          { value: 'draft', label: 'Draft' },
+          { value: 'pending', label: 'Pending' },
+          { value: 'paid', label: 'Paid' },
+          { value: 'overdue', label: 'Overdue' },
+          { value: 'cancelled', label: 'Cancelled' },
+        ],
+      }}
+      selectedIds={selectedIds}
+      onSelectionClear={() => setSelectedIds(new Set())}
+      bulkActions={[
+        { label: 'Export selected', onClick: () => { const selected = invoices.filter((i) => selectedIds.has(i.id)); exportTableToCSV(columns, selected, 'sales-invoices-selected'); } },
+      ]}
+      extraActions={<Button onClick={openCreate}>+ New invoice</Button>}
+    >
       {loading ? (
         <Card padding="lg"><SkeletonText lines={6} /></Card>
       ) : error ? (
@@ -210,188 +241,203 @@ export default function SalesInvoices() {
           columns={columns}
           data={invoices}
           getRowId={(row) => row.id}
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           emptyTitle="No invoices yet"
           emptyDescription="Raise your first sales invoice to bill a customer."
           emptyAction={<Button onClick={openCreate}>+ New invoice</Button>}
         />
       )}
+      <>
+        <DataTable
+          caption="Sales invoices"
+          columns={columns}
+          data={invoices}
+          getRowId={(row) => row.id}
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          emptyTitle="No invoices yet"
+          emptyDescription="Raise your first sales invoice to bill a customer."
+          emptyAction={<Button onClick={openCreate}>+ New invoice</Button>}
+        />
 
-      <Modal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        title="New sales invoice"
-        description="Bill a customer for goods or services."
-        size="lg"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setCreateOpen(false)} disabled={saving}>Cancel</Button>
-            <Button type="submit" form="si-form" isLoading={saving} loadingLabel="Raising">{grandTotal > 0 ? `Raise · ${formatINR(grandTotal)}` : 'Raise'}</Button>
-          </>
-        }
-      >
-        <form id="si-form" className="space-y-4" onSubmit={submit}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FormField label="Customer" htmlFor="si-customer" required>
-              <Select
-                id="si-customer"
-                value={form.customerId}
-                onChange={(e) => setForm((f) => ({ ...f, customerId: e.target.value }))}
-                placeholder="Select customer"
-                options={customerOptions}
+        <Modal
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          title="New sales invoice"
+          description="Bill a customer for goods or services."
+          size="lg"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setCreateOpen(false)} disabled={saving}>Cancel</Button>
+              <Button type="submit" form="si-form" isLoading={saving} loadingLabel="Raising">{grandTotal > 0 ? `Raise · ${formatINR(grandTotal)}` : 'Raise'}</Button>
+            </>
+          }
+        >
+          <form id="si-form" className="space-y-4" onSubmit={submit}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField label="Customer" htmlFor="si-customer" required>
+                <Select
+                  id="si-customer"
+                  value={form.customerId}
+                  onChange={(e) => setForm((f) => ({ ...f, customerId: e.target.value }))}
+                  placeholder="Select customer"
+                  options={customerOptions}
+                />
+              </FormField>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="Date" htmlFor="si-date" required>
+                  <TextField id="si-date" type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+                </FormField>
+                <FormField label="Due" htmlFor="si-due" required>
+                  <TextField id="si-due" type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} />
+                </FormField>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-ink">Line items</span>
+                <Button type="button" size="sm" variant="ghost" onClick={addLine}>+ Add line</Button>
+              </div>
+              {form.lines.map((line, idx) => (
+                <div key={idx} className="grid gap-2 rounded border border-border p-3 sm:grid-cols-12 sm:items-end">
+                  <div className="sm:col-span-4">
+                    <FormField label="Item" htmlFor={`si-item-${idx}`} required>
+                      <TextField id={`si-item-${idx}`} value={line.item} onChange={(e) => updateLine(idx, { item: e.target.value })} placeholder="Item / service" />
+                    </FormField>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <FormField label="Qty" htmlFor={`si-qty-${idx}`}>
+                      <TextField id={`si-qty-${idx}`} type="number" min={0} value={line.qty} onChange={(e) => updateLine(idx, { qty: Number(e.target.value) })} />
+                    </FormField>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <FormField label="Rate" htmlFor={`si-rate-${idx}`}>
+                      <TextField id={`si-rate-${idx}`} type="number" min={0} value={line.rate} onChange={(e) => updateLine(idx, { rate: Number(e.target.value) })} />
+                    </FormField>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <FormField label="GST %" htmlFor={`si-gst-${idx}`}>
+                      <TextField id={`si-gst-${idx}`} type="number" min={0} value={line.gstRate} onChange={(e) => updateLine(idx, { gstRate: Number(e.target.value) })} />
+                    </FormField>
+                  </div>
+                  <div className="sm:col-span-2 flex items-center justify-between gap-1">
+                    <span className="text-sm tabular-nums text-ink-muted">{formatINR(lineAmount(line))}</span>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => removeLine(idx)} disabled={form.lines.length <= 1}>✕</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-6 rounded bg-canvas px-3 py-2 text-sm">
+              <span className="text-ink-muted">Subtotal {formatINR(subtotal)}</span>
+              <span className="text-ink-muted">GST {formatINR(Math.round(gstTotal))}</span>
+              <span className="font-semibold text-ink">Total {formatINR(grandTotal)}</span>
+            </div>
+          </form>
+        </Modal>
+
+        <Modal
+          open={!!detail}
+          onClose={() => setDetail(null)}
+          title={detail ? `Invoice ${detail.number}` : ''}
+          description={detail?.customerName}
+          size="lg"
+          footer={
+            <>
+              {detail && detail.status !== 'paid' && detail.status !== 'cancelled' && (
+                <Button onClick={() => openReceipt(detail)}>Record receipt</Button>
+              )}
+              <Button variant="secondary" onClick={() => setDetail(null)}>Close</Button>
+            </>
+          }
+        >
+          {detail && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+                <div>
+                  <div className="text-ink-muted">Date</div>
+                  <div className="font-medium text-ink">{detail.date}</div>
+                </div>
+                <div>
+                  <div className="text-ink-muted">Due</div>
+                  <div className="font-medium text-ink">{detail.dueDate}</div>
+                </div>
+                <div>
+                  <div className="text-ink-muted">Total</div>
+                  <div className="font-medium text-ink tabular-nums">{formatINR(detail.total)}</div>
+                </div>
+                <div>
+                  <div className="text-ink-muted">Outstanding</div>
+                  <div className="font-medium text-ink tabular-nums">{formatINR(outstanding)}</div>
+                </div>
+              </div>
+              <div className="overflow-hidden rounded border border-border">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-canvas/60 text-ink-muted">
+                      <th className="px-3 py-2 font-medium">Item</th>
+                      <th className="px-3 py-2 text-right font-medium">Qty</th>
+                      <th className="px-3 py-2 text-right font-medium">Rate</th>
+                      <th className="px-3 py-2 text-right font-medium">GST%</th>
+                      <th className="px-3 py-2 text-right font-medium">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(detail.lineItems ?? []).map((l: any, i: number) => (
+                      <tr key={i} className="border-b border-border last:border-0">
+                        <td className="px-3 py-2 text-ink">{l.item}</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-ink-muted">{l.qty}</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-ink-muted">{l.rate}</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-ink-muted">{l.gstRate}</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-ink">{formatINR(l.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex justify-end gap-6 text-sm">
+                <span className="text-ink-muted">GST {formatINR(detail.gstTotal)}</span>
+                <span className="font-semibold text-ink">Total {formatINR(detail.total)}</span>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        <Modal
+          open={receiptOpen}
+          onClose={() => setReceiptOpen(false)}
+          title="Record receipt"
+          description={detail ? `Invoice ${detail.number} · ${detail.customerName}` : ''}
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setReceiptOpen(false)} disabled={receipting}>Cancel</Button>
+              <Button type="submit" form="receipt-form" isLoading={receipting} loadingLabel="Saving">Record receipt</Button>
+            </>
+          }
+        >
+          <form id="receipt-form" className="space-y-4" onSubmit={submitReceipt}>
+            <div className="rounded bg-canvas px-3 py-2 text-sm text-ink-muted">
+              Outstanding: <span className="font-medium text-ink tabular-nums">{formatINR(outstanding)}</span>
+            </div>
+            <FormField label="Amount received" htmlFor="rcpt-amount" required>
+              <TextField
+                id="rcpt-amount"
+                type="number"
+                min={0}
+                max={outstanding}
+                value={receipt.amount}
+                onChange={(e) => setReceipt((r) => ({ ...r, amount: e.target.value }))}
+                placeholder="0"
               />
             </FormField>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="Date" htmlFor="si-date" required>
-                <TextField id="si-date" type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
-              </FormField>
-              <FormField label="Due" htmlFor="si-due" required>
-                <TextField id="si-due" type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} />
-              </FormField>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-ink">Line items</span>
-              <Button type="button" size="sm" variant="ghost" onClick={addLine}>+ Add line</Button>
-            </div>
-            {form.lines.map((line, idx) => (
-              <div key={idx} className="grid gap-2 rounded border border-border p-3 sm:grid-cols-12 sm:items-end">
-                <div className="sm:col-span-4">
-                  <FormField label="Item" htmlFor={`si-item-${idx}`} required>
-                    <TextField id={`si-item-${idx}`} value={line.item} onChange={(e) => updateLine(idx, { item: e.target.value })} placeholder="Item / service" />
-                  </FormField>
-                </div>
-                <div className="sm:col-span-2">
-                  <FormField label="Qty" htmlFor={`si-qty-${idx}`}>
-                    <TextField id={`si-qty-${idx}`} type="number" min={0} value={line.qty} onChange={(e) => updateLine(idx, { qty: Number(e.target.value) })} />
-                  </FormField>
-                </div>
-                <div className="sm:col-span-2">
-                  <FormField label="Rate" htmlFor={`si-rate-${idx}`}>
-                    <TextField id={`si-rate-${idx}`} type="number" min={0} value={line.rate} onChange={(e) => updateLine(idx, { rate: Number(e.target.value) })} />
-                  </FormField>
-                </div>
-                <div className="sm:col-span-2">
-                  <FormField label="GST %" htmlFor={`si-gst-${idx}`}>
-                    <TextField id={`si-gst-${idx}`} type="number" min={0} value={line.gstRate} onChange={(e) => updateLine(idx, { gstRate: Number(e.target.value) })} />
-                  </FormField>
-                </div>
-                <div className="sm:col-span-2 flex items-center justify-between gap-1">
-                  <span className="text-sm tabular-nums text-ink-muted">{formatINR(lineAmount(line))}</span>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => removeLine(idx)} disabled={form.lines.length <= 1}>✕</Button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex justify-end gap-6 rounded bg-canvas px-3 py-2 text-sm">
-            <span className="text-ink-muted">Subtotal {formatINR(subtotal)}</span>
-            <span className="text-ink-muted">GST {formatINR(Math.round(gstTotal))}</span>
-            <span className="font-semibold text-ink">Total {formatINR(grandTotal)}</span>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal
-        open={!!detail}
-        onClose={() => setDetail(null)}
-        title={detail ? `Invoice ${detail.number}` : ''}
-        description={detail?.customerName}
-        size="lg"
-        footer={
-          <>
-            {detail && detail.status !== 'paid' && detail.status !== 'cancelled' && (
-              <Button onClick={() => openReceipt(detail)}>Record receipt</Button>
-            )}
-            <Button variant="secondary" onClick={() => setDetail(null)}>Close</Button>
-          </>
-        }
-      >
-        {detail && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-              <div>
-                <div className="text-ink-muted">Date</div>
-                <div className="font-medium text-ink">{detail.date}</div>
-              </div>
-              <div>
-                <div className="text-ink-muted">Due</div>
-                <div className="font-medium text-ink">{detail.dueDate}</div>
-              </div>
-              <div>
-                <div className="text-ink-muted">Total</div>
-                <div className="font-medium text-ink tabular-nums">{formatINR(detail.total)}</div>
-              </div>
-              <div>
-                <div className="text-ink-muted">Outstanding</div>
-                <div className="font-medium text-ink tabular-nums">{formatINR(outstanding)}</div>
-              </div>
-            </div>
-            <div className="overflow-hidden rounded border border-border">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-canvas/60 text-ink-muted">
-                    <th className="px-3 py-2 font-medium">Item</th>
-                    <th className="px-3 py-2 text-right font-medium">Qty</th>
-                    <th className="px-3 py-2 text-right font-medium">Rate</th>
-                    <th className="px-3 py-2 text-right font-medium">GST%</th>
-                    <th className="px-3 py-2 text-right font-medium">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(detail.lineItems ?? []).map((l: any, i: number) => (
-                    <tr key={i} className="border-b border-border last:border-0">
-                      <td className="px-3 py-2 text-ink">{l.item}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-ink-muted">{l.qty}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-ink-muted">{l.rate}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-ink-muted">{l.gstRate}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-ink">{formatINR(l.amount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex justify-end gap-6 text-sm">
-              <span className="text-ink-muted">GST {formatINR(detail.gstTotal)}</span>
-              <span className="font-semibold text-ink">Total {formatINR(detail.total)}</span>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      <Modal
-        open={receiptOpen}
-        onClose={() => setReceiptOpen(false)}
-        title="Record receipt"
-        description={detail ? `Invoice ${detail.number} · ${detail.customerName}` : ''}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setReceiptOpen(false)} disabled={receipting}>Cancel</Button>
-            <Button type="submit" form="receipt-form" isLoading={receipting} loadingLabel="Saving">Record receipt</Button>
-          </>
-        }
-      >
-        <form id="receipt-form" className="space-y-4" onSubmit={submitReceipt}>
-          <div className="rounded bg-canvas px-3 py-2 text-sm text-ink-muted">
-            Outstanding: <span className="font-medium text-ink tabular-nums">{formatINR(outstanding)}</span>
-          </div>
-          <FormField label="Amount received" htmlFor="rcpt-amount" required>
-            <TextField
-              id="rcpt-amount"
-              type="number"
-              min={0}
-              max={outstanding}
-              value={receipt.amount}
-              onChange={(e) => setReceipt((r) => ({ ...r, amount: e.target.value }))}
-              placeholder="0"
-            />
-          </FormField>
-          <FormField label="Date" htmlFor="rcpt-date" required>
-            <TextField id="rcpt-date" type="date" value={receipt.date} onChange={(e) => setReceipt((r) => ({ ...r, date: e.target.value }))} />
-          </FormField>
-        </form>
-      </Modal>
-    </div>
+            <FormField label="Date" htmlFor="rcpt-date" required>
+              <TextField id="rcpt-date" type="date" value={receipt.date} onChange={(e) => setReceipt((r) => ({ ...r, date: e.target.value }))} />
+            </FormField>
+          </form>
+        </Modal>
+      </>
+    </TableToolbar>
   );
 }

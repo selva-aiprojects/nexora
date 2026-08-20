@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { Badge, Button, Card, DataTable, type Column, FormField, Modal, PageHeader, Select, TextField, useToast } from '@/components';
+import { Badge, Button, Card, DataTable, type Column, FormField, Modal, Select, TextField, useToast } from '@/components';
 import { api, type CreateHRMSEmployeeInput, type HRMSDepartment, type HRMSDesignation, type HRMSEmployee } from '@/lib/api';
 import { cn, formatDate } from '@/lib/utils';
+import { TableToolbar } from '@/components/toolbar/TableToolbar';
 
 const STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
   active: 'success',
@@ -30,6 +31,8 @@ function Employees() {
   const [designations, setDesignations] = React.useState<HRMSDesignation[]>([]);
   const [page, setPage] = React.useState(1);
   const [total, setTotal] = React.useState(0);
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [filters, setFilters] = React.useState<{ search?: string; status?: string }>({});
 
   const [createOpen, setCreateOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
@@ -58,7 +61,13 @@ function Employees() {
     ])
       .then(([res, deps, desigs]) => {
         if (cancelled) return;
-        setEmployees(res.rows ?? []);
+        let rows = res.rows ?? [];
+        if (filters.status) rows = rows.filter((r) => r.status === filters.status);
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          rows = rows.filter((r) => r.name.toLowerCase().includes(q) || r.employeeCode.toLowerCase().includes(q));
+        }
+        setEmployees(rows);
         setTotal(res.total ?? 0);
         setDepartments(deps);
         setDesignations(desigs);
@@ -66,7 +75,7 @@ function Employees() {
       .catch((err) => { if (!cancelled) setError(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [page]);
+  }, [page, filters]);
 
   React.useEffect(() => load(), [load]);
 
@@ -155,15 +164,31 @@ function Employees() {
   ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <PageHeader
-        title="Employees"
-        description="Employee directory, onboarding and organization structure."
-        actions={
-          <Button onClick={openCreate}>Add employee</Button>
-        }
-      />
-
+    <TableToolbar
+      title="Employees"
+      subtitle="Employee directory, onboarding and organization structure."
+      data={employees}
+      columns={columns}
+      filename="employees"
+      filters={filters}
+      onFiltersChange={setFilters}
+      onReset={() => setFilters({})}
+      showFilterBar
+      filterProps={{
+        searchPlaceholder: 'Search employees...',
+        showStatus: true,
+        statusOptions: [
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+        ],
+      }}
+      selectedIds={selectedIds}
+      onSelectionClear={() => setSelectedIds(new Set())}
+      bulkActions={[
+        { label: 'Export selected', onClick: () => { /* export selectedIds */ } },
+      ]}
+      extraActions={<Button onClick={openCreate}>Add employee</Button>}
+    >
       <DataTable
         caption="Employees"
         columns={columns}
@@ -173,106 +198,109 @@ function Employees() {
         error={error ?? undefined}
         onRetry={load}
         onRowClick={openDetail}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
         pagination={{ page, pageSize: 20, total, onPageChange: setPage }}
         emptyTitle="No employees"
         emptyDescription="Add employees to see them here."
         emptyAction={<Button onClick={openCreate}>Add employee</Button>}
       />
-
-      <Modal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        title="Add employee"
-        description="Create a new active employee record."
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setCreateOpen(false)} disabled={saving}>Cancel</Button>
-            <Button onClick={submitCreate} isLoading={saving}>Save employee</Button>
-          </>
-        }
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="Name" htmlFor="name" required error={formErrors.name}>
-            <TextField id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" />
-          </FormField>
-          <FormField label="Email" htmlFor="email" required error={formErrors.email}>
-            <TextField id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@acme.in" />
-          </FormField>
-          <FormField label="Phone" htmlFor="phone">
-            <TextField id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="9876500000" />
-          </FormField>
-          <FormField label="Date of joining" htmlFor="doj">
-            <TextField id="doj" type="date" value={form.dateOfJoining} onChange={(e) => setForm({ ...form, dateOfJoining: e.target.value })} />
-          </FormField>
-          <FormField label="Department" htmlFor="department" required error={formErrors.departmentId}>
-            <Select
-              id="department"
-              placeholder="Select department"
-              value={form.departmentId}
-              onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
-              options={departments.map((d) => ({ value: d.id, label: d.name }))}
-            />
-          </FormField>
-          <FormField label="Designation" htmlFor="designation" required error={formErrors.designationId}>
-            <Select
-              id="designation"
-              placeholder="Select designation"
-              value={form.designationId}
-              onChange={(e) => setForm({ ...form, designationId: e.target.value })}
-              options={designations.map((d) => ({ value: d.id, label: d.title }))}
-            />
-          </FormField>
-          <FormField label="Grade" htmlFor="grade">
-            <TextField id="grade" value={form.grade} onChange={(e) => setForm({ ...form, grade: e.target.value })} placeholder="E1, M2…" />
-          </FormField>
-          <div className="sm:col-span-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Salary (per month)</p>
-          </div>
-          <FormField label="Basic" htmlFor="basic">
-            <TextField id="basic" type="number" min={0} value={form.basic} onChange={(e) => setForm({ ...form, basic: e.target.value })} placeholder="0" />
-          </FormField>
-          <FormField label="HRA" htmlFor="hra">
-            <TextField id="hra" type="number" min={0} value={form.hra} onChange={(e) => setForm({ ...form, hra: e.target.value })} placeholder="0" />
-          </FormField>
-          <FormField label="Allowances" htmlFor="allowances">
-            <TextField id="allowances" type="number" min={0} value={form.allowances} onChange={(e) => setForm({ ...form, allowances: e.target.value })} placeholder="0" />
-          </FormField>
-        </div>
-      </Modal>
-
-      <Modal
-        open={!!detail}
-        onClose={() => setDetail(null)}
-        title={detail?.name ?? 'Employee'}
-        description={detail?.employeeCode}
-        size="lg"
-      >
-        {detail && (
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <DetailRow label="Email" value={detail.email} />
-              <DetailRow label="Phone" value={detail.phone || '—'} />
-              <DetailRow label="Department" value={detail.departmentName ?? detail.departmentId} />
-              <DetailRow label="Designation" value={detail.designationName ?? detail.designationId} />
-              <DetailRow label="Grade" value={detail.grade || '—'} />
-              <DetailRow label="Date of joining" value={formatDate(detail.dateOfJoining)} />
-              <DetailRow
-                label="Status"
-                value={<Badge tone={STATUS_TONE[detail.status] ?? 'neutral'} withDot>{detail.status}</Badge>}
+      <>
+        <Modal
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          title="Add employee"
+          description="Create a new active employee record."
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setCreateOpen(false)} disabled={saving}>Cancel</Button>
+              <Button onClick={submitCreate} isLoading={saving}>Save employee</Button>
+            </>
+          }
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField label="Name" htmlFor="name" required error={formErrors.name}>
+              <TextField id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" />
+            </FormField>
+            <FormField label="Email" htmlFor="email" required error={formErrors.email}>
+              <TextField id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@acme.in" />
+            </FormField>
+            <FormField label="Phone" htmlFor="phone">
+              <TextField id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="9876500000" />
+            </FormField>
+            <FormField label="Date of joining" htmlFor="doj">
+              <TextField id="doj" type="date" value={form.dateOfJoining} onChange={(e) => setForm({ ...form, dateOfJoining: e.target.value })} />
+            </FormField>
+            <FormField label="Department" htmlFor="department" required error={formErrors.departmentId}>
+              <Select
+                id="department"
+                placeholder="Select department"
+                value={form.departmentId}
+                onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
+                options={departments.map((d) => ({ value: d.id, label: d.name }))}
               />
+            </FormField>
+            <FormField label="Designation" htmlFor="designation" required error={formErrors.designationId}>
+              <Select
+                id="designation"
+                placeholder="Select designation"
+                value={form.designationId}
+                onChange={(e) => setForm({ ...form, designationId: e.target.value })}
+                options={designations.map((d) => ({ value: d.id, label: d.title }))}
+              />
+            </FormField>
+            <FormField label="Grade" htmlFor="grade">
+              <TextField id="grade" value={form.grade} onChange={(e) => setForm({ ...form, grade: e.target.value })} placeholder="E1, M2…" />
+            </FormField>
+            <div className="sm:col-span-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Salary (per month)</p>
             </div>
-            <Card padding="sm">
-              <h3 className="text-sm font-semibold text-ink">Salary</h3>
-              <dl className="mt-2 grid grid-cols-3 gap-3 text-sm">
-                <DetailRow label="Basic" value={`₹${detail.salary.basic.toLocaleString('en-IN')}`} />
-                <DetailRow label="HRA" value={`₹${detail.salary.hra.toLocaleString('en-IN')}`} />
-                <DetailRow label="Allowances" value={`₹${detail.salary.allowances.toLocaleString('en-IN')}`} />
-              </dl>
-            </Card>
+            <FormField label="Basic" htmlFor="basic">
+              <TextField id="basic" type="number" min={0} value={form.basic} onChange={(e) => setForm({ ...form, basic: e.target.value })} placeholder="0" />
+            </FormField>
+            <FormField label="HRA" htmlFor="hra">
+              <TextField id="hra" type="number" min={0} value={form.hra} onChange={(e) => setForm({ ...form, hra: e.target.value })} placeholder="0" />
+            </FormField>
+            <FormField label="Allowances" htmlFor="allowances">
+              <TextField id="allowances" type="number" min={0} value={form.allowances} onChange={(e) => setForm({ ...form, allowances: e.target.value })} placeholder="0" />
+            </FormField>
           </div>
-        )}
-      </Modal>
-    </div>
+        </Modal>
+
+        <Modal
+          open={!!detail}
+          onClose={() => setDetail(null)}
+          title={detail?.name ?? 'Employee'}
+          description={detail?.employeeCode}
+          size="lg"
+        >
+          {detail && (
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <DetailRow label="Email" value={detail.email} />
+                <DetailRow label="Phone" value={detail.phone || '—'} />
+                <DetailRow label="Department" value={detail.departmentName ?? detail.departmentId} />
+                <DetailRow label="Designation" value={detail.designationName ?? detail.designationId} />
+                <DetailRow label="Grade" value={detail.grade || '—'} />
+                <DetailRow label="Date of joining" value={formatDate(detail.dateOfJoining)} />
+                <DetailRow
+                  label="Status"
+                  value={<Badge tone={STATUS_TONE[detail.status] ?? 'neutral'} withDot>{detail.status}</Badge>}
+                />
+              </div>
+              <Card padding="sm">
+                <h3 className="text-sm font-semibold text-ink">Salary</h3>
+                <dl className="mt-2 grid grid-cols-3 gap-3 text-sm">
+                  <DetailRow label="Basic" value={`₹${detail.salary.basic.toLocaleString('en-IN')}`} />
+                  <DetailRow label="HRA" value={`₹${detail.salary.hra.toLocaleString('en-IN')}`} />
+                  <DetailRow label="Allowances" value={`₹${detail.salary.allowances.toLocaleString('en-IN')}`} />
+                </dl>
+              </Card>
+            </div>
+          )}
+        </Modal>
+      </>
+    </TableToolbar>
   );
 }
 

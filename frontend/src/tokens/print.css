@@ -1,0 +1,8 @@
+@media print {
+  body { background: #fff; }
+  .no-print, nav, header, footer, .nx-sidebar, .nx-topbar { display: none !important; }
+  .nx-main { margin: 0 !important; padding: 0 !important; }
+  table { border-collapse: collapse; font-size: 12px; }
+  th, td { border: 1px solid #ccc; padding: 6px; }
+  .print-break { page-break-inside: avoid; }
+}

@@ -22,20 +22,22 @@
 
 #### Frontend (React + Vite + Tailwind)
 - **Routing**: react-router-dom with all module routes
-- **Components**: Button, Badge, Card, DataTable, FormField, Modal, Toast, AppShell, PageHeader, ConfirmDialog, ThemeToggle, FilterBar
+- **Components**: Button, Badge, Card, DataTable, FormField, Modal, Toast, AppShell, PageHeader, ConfirmDialog, ThemeToggle, FilterBar, TableToolbar
 - **Pages**: Dashboard (with charts), Accounting (7), HRMS (5), Manufacturing (6), Inventory (3), Procurement (4), Projects (5), Quality (3), CRM (4), Compliance (2), DMS (1), ESS (5), AI (5)
 - **Charts**: Revenue trend, stock by warehouse, low-stock alerts (recharts)
 - **Theme**: CSS variables for Intelligent Indigo, dark mode toggle, brand gradient utilities, module accent colors
 - **Branding**: logo.png + Tagline.png in sidebar header, favicon.png
 - **Validation**: Zod schemas for sales invoices, purchase invoices, employees, customers, vendors, projects
 - **Filters**: Reusable FilterBar component with search, date range, amount range, status filter, saved presets
-- **Export**: CSV/Excel export utilities (xlsx, papaparse)
-- **Print**: react-to-print for PDF generation
+- **Export**: CSV/Excel export utilities (xlsx, papaparse) — wired into TableToolbar
+- **Print**: Print CSS + window.print() wired into TableToolbar
+- **TableToolbar**: Unified toolbar with title, filters, export, print, bulk actions, extra actions
+- **DataTable enhancements**: visibleColumns prop, selectedIds support (wired in key pages)
 
 ### 🚧 In Progress
-- Applying advanced filters, export/print, and validation to all existing pages
-- Bulk actions, inline editing, column customization in DataTable
+- Applying TableToolbar + FilterBar to remaining pages (purchase invoices, customers, leads, etc.)
 - Dashboard customization widgets
+- Data import component (CSV/Excel mapping + preview)
 
 ### 📋 Planned (Enhancements)
 

@@ -8,6 +8,7 @@ const MODULES = [
   { key: 'finance', label: 'Finance', icon: '💰' },
   { key: 'procurement', label: 'Procurement', icon: '🛒' },
   { key: 'inventory', label: 'Inventory', icon: '📦' },
+  { key: 'manufacturing', label: 'Manufacturing', icon: '🏭' },
   { key: 'crm', label: 'CRM', icon: '🤝' },
   { key: 'hrms', label: 'HRMS', icon: '👥' },
 ];

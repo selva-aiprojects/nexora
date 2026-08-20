@@ -256,7 +256,7 @@ export function MultiLineChart({ data, lines, xAxisLabel, yAxisLabel }: { data: 
           formatter={(value: any, name: any) => [formatINR(value as number), name]}
           contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
         />
-        <Legend />
+        <Legend formatter={(value) => <span style={{ fontSize: 10 }}>{value}</span>} />
         {lines.map((line) => (
           <Area key={line.dataKey} type="monotone" dataKey={line.dataKey} stroke={line.color} fill={`url(#nx-${line.dataKey})`} strokeWidth={2} name={line.name} />
         ))}

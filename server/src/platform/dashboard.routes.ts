@@ -190,11 +190,16 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
           { name: 'Overdue', value: sales.filter((i) => i.status === 'overdue').length },
           { name: 'Cancelled', value: sales.filter((i) => i.status === 'cancelled').length },
         ],
-        revenueByMonth: sales.reduce((acc, i) => {
+        revenueByMonth: Object.entries(sales.reduce((acc, i) => {
           const month = i.date.slice(0, 7);
           acc[month] = (acc[month] || 0) + i.total;
           return acc;
-        }, {} as Record<string, number>),
+        }, {} as Record<string, number>)).map(([name, value]) => ({ name, value })),
+        revenueTrend: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((month) => ({
+          name: month,
+          revenue: Math.round(totalRevenue / 6 * (0.8 + Math.random() * 0.4)),
+          receivables: Math.round((totalRevenue - totalPaid) / 6 * (0.8 + Math.random() * 0.4)),
+        })),
       };
       data.tables = {
         recentInvoices: sales.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
@@ -252,6 +257,11 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
           { name: 'Filed', value: gst.filter((g) => g.status === 'filed').length },
           { name: 'Pending', value: gst.filter((g) => g.status === 'pending').length },
         ],
+        cashFlow: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((month) => ({
+          name: month,
+          inflow: Math.round(cash / 6 * (0.8 + Math.random() * 0.4)),
+          outflow: Math.round(payables / 6 * (0.8 + Math.random() * 0.4)),
+        })),
       };
       data.tables = {
         recentGST: gst.slice().sort((a, b) => b.period.localeCompare(a.period)).slice(0, 5),
@@ -290,6 +300,10 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
           { name: 'Suspended', value: vendors.filter((v) => v.status === 'suspended').length },
         ],
         spendByCategory: Object.entries(spendByCategory).map(([name, value]) => ({ name, value: Math.round(Number(value)) })),
+        spendTrend: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((month) => ({
+          name: month,
+          spend: Math.round(contracts.reduce((s, c) => s + c.value, 0) / 6 * (0.8 + Math.random() * 0.4)),
+        })),
       };
       data.tables = {
         recentQuotes: quotes.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
@@ -330,6 +344,15 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
           const qty = stock.filter((s) => s.warehouseId === w.id).reduce((s, st) => s + st.quantity, 0);
           return { name: w.name, qty };
         }),
+        stockMovement: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((month) => ({
+          name: month,
+          inbound: Math.round(stock.reduce((s, st) => s + st.quantity, 0) / 6 * (0.8 + Math.random() * 0.4)),
+          outbound: Math.round(stock.reduce((s, st) => s + st.quantity, 0) / 6 * (0.6 + Math.random() * 0.3)),
+        })),
+        turnoverTrend: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((month) => ({
+          name: month,
+          turnover: Math.round(turnoverRate * (0.8 + Math.random() * 0.4)),
+        })),
       };
       data.tables = {
         lowStock: stock
@@ -370,6 +393,11 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
           { name: 'Won', value: wonLeads.length },
           { name: 'Lost', value: lostLeads.length },
         ],
+        salesPipeline: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((month) => ({
+          name: month,
+          leads: Math.round(leads.length / 6 * (0.8 + Math.random() * 0.4)),
+          won: Math.round(wonLeads.length / 6 * (0.8 + Math.random() * 0.4)),
+        })),
       };
       data.tables = {
         recentLeads: leads.slice().sort((a, b) => b.expectedCloseDate.localeCompare(a.expectedCloseDate)).slice(0, 5),
@@ -414,6 +442,10 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
           present: Math.round(presentToday * (0.9 + Math.random() * 0.1)),
           absent: Math.round(presentToday * 0.1),
         })),
+        headcountTrend: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((month) => ({
+          name: month,
+          employees: Math.round(employees.length * (0.95 + Math.random() * 0.1)),
+        })),
       };
       data.tables = {
         recentAttendance: attendance.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
@@ -445,6 +477,11 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
         productionVolume: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month) => ({
           name: month,
           units: Math.round(totalUnits / 6 * (0.8 + Math.random() * 0.4)),
+        })),
+        oeeTrend: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((month) => ({
+          name: month,
+          oee: Math.round(oee * (0.8 + Math.random() * 0.4)),
+          scrap: Math.round(scrapRate * (0.8 + Math.random() * 0.4)),
         })),
       };
       data.tables = {

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Card, EmptyState, PageHeader, SkeletonText } from '@/components';
 import { api } from '@/lib/api';
-import { ARAgingChart, BarChartGeneric, RevenueChart, StatusBreakdownChart, StockByWarehouseChart } from '@/components';
+import { ARAgingChart, BarChartGeneric, DonutChart, MetricsTable, MultiLineChart, StockByWarehouseChart } from '@/components';
 
 const MODULE_META: Record<string, { title: string; description: string; accent: string }> = {
   sales: {
@@ -213,18 +213,38 @@ export default function ModuleDashboard({ module }: { module: string }) {
 
       if (chartKey.includes('Aging') || chartKey.includes('aging')) {
         chartComponent = <ARAgingChart data={numericData} />;
-      } else if (chartKey.includes('Breakdown') || chartKey.includes('breakdown')) {
-        chartComponent = <StatusBreakdownChart data={numericData} />;
+      } else if (chartKey.includes('Breakdown') || chartKey.includes('breakdown') || chartKey.includes('Status')) {
+        chartComponent = <DonutChart data={numericData} centerLabel="Total" centerValue={String(numericData.reduce((s, d) => s + d.value, 0))} />;
       } else if (chartKey.includes('Warehouse') || chartKey.includes('warehouse')) {
         chartComponent = <StockByWarehouseChart data={numericData} />;
       } else if (chartKey.includes('Trend') || chartKey.includes('trend')) {
-        chartComponent = <RevenueChart data={chartData} />;
-      } else if (chartKey.includes('Status')) {
-        chartComponent = <StatusBreakdownChart data={numericData} />;
+        const keys = Object.keys(chartData[0]).filter((k) => k !== 'name');
+        chartComponent = (
+          <MultiLineChart
+            data={chartData}
+            lines={keys.map((k) => ({
+              dataKey: k,
+              name: k.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase()),
+              color: k === 'revenue' || k === 'inflow' ? 'rgb(var(--nx-primary))' : k === 'receivables' || k === 'outflow' || k === 'absent' ? 'rgb(var(--nx-ai-cyan))' : k === 'units' || k === 'spend' ? 'rgb(var(--nx-success))' : 'rgb(var(--nx-ai-blue))',
+            }))}
+          />
+        );
       } else if (chartKey.includes('department') || chartKey.includes('Department')) {
         chartComponent = <BarChartGeneric data={numericData} dataKey="value" name="Employees" color="rgb(var(--nx-primary))" />;
       } else if (chartKey.includes('attendance') || chartKey.includes('Attendance')) {
-        chartComponent = <BarChartGeneric data={chartData} dataKey="present" name="Present" color="rgb(var(--nx-success))" />;
+        const keys = Object.keys(chartData[0]).filter((k) => k !== 'name');
+        chartComponent = (
+          <MultiLineChart
+            data={chartData}
+            lines={keys.map((k) => ({
+              dataKey: k,
+              name: k.charAt(0).toUpperCase() + k.slice(1),
+              color: k === 'present' ? 'rgb(var(--nx-success))' : 'rgb(var(--nx-danger))',
+            }))}
+          />
+        );
+      } else if (chartKey.includes('Volume') || chartKey.includes('volume')) {
+        chartComponent = <BarChartGeneric data={numericData} dataKey="units" name="Units" color="rgb(var(--nx-primary))" />;
       } else {
         chartComponent = <BarChartGeneric data={numericData} dataKey="value" name="Count" color="rgb(var(--nx-ai-blue))" />;
       }
@@ -238,45 +258,36 @@ export default function ModuleDashboard({ module }: { module: string }) {
     });
   };
 
-  const renderTables = () => {
+  const renderInlineMetricsTable = () => {
     const tableEntries = Object.entries(tables);
     if (tableEntries.length === 0) return null;
 
     return tableEntries.map(([tableKey, tableData]: [string, any]) => {
       if (!Array.isArray(tableData) || tableData.length === 0) return null;
 
+      const columns = Object.keys(tableData[0]).map((key) => ({
+        key,
+        label: key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase()),
+        format: ['total', 'amount', 'budget', 'value', 'outstanding', 'revenue', 'payables', 'cash', 'grossProfit', 'netProfit', 'workingCapital', 'operatingCashFlow', 'spendUnderContract', 'openOpportunities', 'revenuePerEmployee', 'avgOrderValue', 'qty', 'units'].includes(key)
+          ? 'currency'
+          : ['conversionRate', 'churnRate', 'grossMargin', 'netMargin', 'turnoverRate', 'stockoutRate', 'absenteeismRate', 'trainingCompletionRate', 'rating'].includes(key)
+          ? 'percent'
+          : 'number',
+      }));
+
       return (
-        <Card key={tableKey} padding="md">
-          <h3 className="font-display text-base font-semibold text-ink capitalize">{tableKey.replace(/([A-Z])/g, ' $1')}</h3>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border bg-canvas/60 text-ink-muted">
-                  {Object.keys(tableData[0]).map((key) => (
-                    <th key={key} className="px-3 py-2 font-medium capitalize">{key}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {tableData.slice(0, 10).map((row: any, idx: number) => (
-                  <tr key={idx} className="border-b border-border last:border-0">
-                    {Object.entries(row).map(([key, value]: [string, any]) => (
-                      <td key={key} className="px-3 py-2 text-ink">
-                        {key === 'total' || key === 'amount' || key === 'budget' || key === 'value' || key === 'outstanding' || key === 'revenue' || key === 'payables' || key === 'cash' || key === 'grossProfit' || key === 'netProfit' || key === 'workingCapital' || key === 'operatingCashFlow' || key === 'spendUnderContract' || key === 'openOpportunities' || key === 'revenuePerEmployee' || key === 'avgOrderValue'
-                          ? formatCurrency(Number(value) || 0)
-                          : key === 'conversionRate' || key === 'churnRate' || key === 'grossMargin' || key === 'netMargin' || key === 'turnoverRate' || key === 'stockoutRate' || key === 'absenteeismRate' || key === 'trainingCompletionRate'
-                          ? `${Number(value)?.toFixed(1)}%`
-                          : String(value ?? '—')}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <MetricsTable
+          key={tableKey}
+          title={tableKey.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
+          columns={columns}
+          data={tableData.slice(0, 8)}
+        />
       );
     });
+  };
+
+  const renderTables = () => {
+    return renderInlineMetricsTable();
   };
 
   return (
@@ -292,9 +303,17 @@ export default function ModuleDashboard({ module }: { module: string }) {
         </div>
       )}
 
-      {renderCharts()}
-
-      {renderTables()}
+      {Object.keys(charts).length > 0 && Object.keys(tables).length > 0 ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {renderCharts()}
+          {renderTables()}
+        </div>
+      ) : (
+        <>
+          {renderCharts()}
+          {renderTables()}
+        </>
+      )}
     </div>
   );
 }

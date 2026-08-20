@@ -33,6 +33,6 @@ export { ConfirmDialog } from './workflows';
 export type { ConfirmDialogProps } from './workflows';
 
 export { ThemeToggle } from './ThemeToggle';
-export { RevenueChart, StockByWarehouseChart, LowStockPieChart, ARAgingChart, StatusBreakdownChart, LineChart, BarChartGeneric } from './charts';
+export { RevenueChart, StockByWarehouseChart, LowStockPieChart, ARAgingChart, StatusBreakdownChart, LineChart, BarChartGeneric, DonutChart, MultiLineChart, MetricsTable } from './charts';
 
 export { cn, formatINR, formatDate } from '../lib/utils';

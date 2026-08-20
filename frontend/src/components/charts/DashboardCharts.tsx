@@ -1,4 +1,5 @@
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { Card } from '@/components';
 
 const COLORS = ['#4338CA', '#2563EB', '#06B6D4', '#7C3AED', '#059669', '#D97706'];
 
@@ -6,6 +7,14 @@ function formatINR(value: number) {
   if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
   if (value >= 1000) return `₹${(value / 1000).toFixed(1)}k`;
   return `₹${value}`;
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 export function RevenueChart({ data }: { data: { month: string; revenue: number; receivables: number }[] }) {
@@ -171,6 +180,104 @@ export function BarChartGeneric({ data, dataKey, name, color }: { data: { name: 
         <Bar dataKey={dataKey} fill={color || 'rgb(var(--nx-ai-blue))'} radius={[4, 4, 0, 0]} name={name} />
       </BarChart>
     </ResponsiveContainer>
+  );
+}
+
+export function DonutChart({ data, dataKey, nameKey, centerLabel, centerValue }: { data: { name: string; value: number }[]; dataKey?: string; nameKey?: string; centerLabel?: string; centerValue?: string }) {
+  const total = data.reduce((s, d) => s + (d.value || 0), 0);
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          innerRadius={60}
+          outerRadius={90}
+          paddingAngle={2}
+          dataKey={dataKey || 'value'}
+          nameKey={nameKey || 'name'}
+          stroke="none"
+        >
+          {data.map((_entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip
+          formatter={(value: any) => [`${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`, '']}
+          contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
+        />
+        {centerLabel && (
+          <text x="50%" y="50%" textAnchor="middle" dy="-0.2em" fill="rgb(var(--nx-ink))" fontSize="12" fontWeight="500">
+            {centerLabel}
+          </text>
+        )}
+        {centerValue && (
+          <text x="50%" y="50%" textAnchor="middle" dy="1em" fill="rgb(var(--nx-ink-muted))" fontSize="20" fontWeight="600">
+            {centerValue}
+          </text>
+        )}
+      </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function MultiLineChart({ data, lines }: { data: { name: string; [key: string]: number | string }[]; lines: { dataKey: string; name: string; color: string }[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <defs>
+          {lines.map((line) => (
+            <linearGradient key={line.dataKey} id={`nx-${line.dataKey}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={line.color} stopOpacity={0.3} />
+              <stop offset="95%" stopColor={line.color} stopOpacity={0} />
+            </linearGradient>
+          ))}
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--nx-border))" />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
+        <Tooltip
+          formatter={(value: any, name: any) => [formatINR(value as number), name]}
+          contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
+        />
+        <Legend />
+        {lines.map((line) => (
+          <Area key={line.dataKey} type="monotone" dataKey={line.dataKey} stroke={line.color} fill={`url(#nx-${line.dataKey})`} strokeWidth={2} name={line.name} />
+        ))}
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function MetricsTable({ title, columns, data, format }: { title: string; columns: { key: string; label: string; format?: string }[]; data: any[]; format?: (value: any, key: string) => string }) {
+  if (!data || data.length === 0) return null;
+  return (
+    <Card padding="md">
+      <h3 className="font-display text-base font-semibold text-ink">{title}</h3>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-border bg-canvas/60 text-ink-muted">
+              {columns.map((col) => (
+                <th key={col.key} className="px-3 py-2 font-medium">{col.label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.slice(0, 8).map((row: any, idx: number) => (
+              <tr key={idx} className="border-b border-border last:border-0 hover:bg-canvas/40">
+                {columns.map((col) => (
+                  <td key={col.key} className="px-3 py-2 text-ink">
+                    {format ? format(row[col.key], col.key) : (col.format === 'currency' ? formatCurrency(Number(row[col.key]) || 0) : col.format === 'percent' ? `${Number(row[col.key])?.toFixed(1)}%` : String(row[col.key] ?? '—'))}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }
 

@@ -1,6 +1,6 @@
 # Nexora ERP — Progress Tracker
 
-## Current Status: v1.1-beta
+## Current Status: v1.2-beta
 
 ### ✅ Completed
 
@@ -19,11 +19,12 @@
 - **Project Accounting**: projects, WBS, time entries, budgets, project P&L reports
 - **Quality Control**: inspection plans, QC checks, non-conformances, severity tracking
 - **Theme system**: Intelligent Indigo palette, light/dark mode, module accents, brand gradients
+- **Module Dashboards**: per-module dashboard APIs (sales, finance, procurement, inventory, crm, hrms) with KPIs, charts, tables
 
 #### Frontend (React + Vite + Tailwind)
 - **Routing**: react-router-dom with all module routes
 - **Components**: Button, Badge, Card, DataTable, FormField, Modal, Toast, AppShell, PageHeader, ConfirmDialog, ThemeToggle, FilterBar, TableToolbar
-- **Pages**: Dashboard (with charts), Accounting (7), HRMS (5), Manufacturing (6), Inventory (3), Procurement (4), Projects (5), Quality (3), CRM (4), Compliance (2), DMS (1), ESS (5), AI (5)
+- **Pages**: Dashboard (module-specific with slider for superadmin), Accounting (7), HRMS (5), Manufacturing (6), Inventory (3), Procurement (4), Projects (5), Quality (3), CRM (4), Compliance (2), DMS (1), ESS (5), AI (5)
 - **Charts**: Revenue trend, stock by warehouse, low-stock alerts (recharts)
 - **Theme**: CSS variables for Intelligent Indigo, dark mode toggle, brand gradient utilities, module accent colors
 - **Branding**: logo.png + Tagline.png in sidebar header, favicon.png
@@ -33,6 +34,7 @@
 - **Print**: Print CSS + window.print() wired into TableToolbar
 - **TableToolbar**: Unified toolbar with title, filters, export, print, bulk actions, extra actions
 - **DataTable enhancements**: visibleColumns prop, selectedIds support (wired in key pages)
+- **Greeting**: Time-based user greeting in header (Good morning/afternoon/evening, {name})
 
 ### 🚧 In Progress
 - Applying TableToolbar + FilterBar to remaining pages (purchase invoices, customers, leads, etc.)
@@ -123,11 +125,9 @@
 | ESS | ✅ | ✅ | /ess/* |
 | AI | ✅ | ✅ | /ai/* |
 
-### 🎯 Next Milestone (v1.1)
-1. **Advanced filters** — Apply FilterBar to all existing pages with saved presets
-2. **Excel/CSV export** — Add export buttons to all DataTables
-3. **Form validation** — Integrate Zod schemas into all create/edit forms
-4. **Print/PDF** — Add print buttons to invoices and reports
+### 🎯 Next Milestone (v1.2)
+1. **Module dashboards** — Complete per-module dashboard pages with graphs (sales, finance, procurement, inventory, crm, hrms)
+2. **Superadmin slider** — Carousel to switch between module dashboards for owner role
+3. **User greeting** — Time-based greeting in header with user name
+4. **Apply TableToolbar to remaining pages** — Purchase invoices, customers, leads, sales orders, etc.
 5. **Data import** — CSV/Excel import with mapping and preview
-6. **Bulk actions** — Multi-select, bulk approve/delete/export in DataTable
-7. **Column customization** — Show/hide/reorder columns in tables

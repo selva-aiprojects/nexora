@@ -1071,6 +1071,9 @@ export const api = {
       lowStockItems: { name: string; qty: number; reorder: number }[];
     }>('/dashboard/charts'),
 
+  getModuleDashboard: (module: string) =>
+    request<any>(`/dashboard/${module}`),
+
   getSalesInvoices: (params?: { status?: string; page?: number; pageSize?: number }) => {
     const qs = new URLSearchParams();
     if (params?.status) qs.set('status', params.status);

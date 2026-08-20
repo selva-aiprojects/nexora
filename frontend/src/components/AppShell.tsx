@@ -29,7 +29,7 @@ function SectionHeader({ title, expanded, onToggle }: { title: string; expanded:
       type="button"
       onClick={onToggle}
       className={cn(
-        'flex w-full items-center justify-between px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-muted',
+        'flex w-full items-center justify-between px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-ink',
         'hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
       )}
       aria-expanded={expanded}

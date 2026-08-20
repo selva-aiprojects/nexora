@@ -24,6 +24,7 @@ export interface User {
   password: string;
   role: Role;
   employeeId?: string;
+  module?: string;
 }
 
 export interface AuthUser {
@@ -33,6 +34,7 @@ export interface AuthUser {
   email: string;
   role: Role;
   employeeId?: string;
+  module?: string;
 }
 
 export interface Pagination {

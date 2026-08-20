@@ -18,10 +18,10 @@ const TENANT = {
 };
 
 const USERS: User[] = [
-  { id: 'usr_owner', tenantId: TENANT.id, name: 'Rajesh Kumar', email: 'owner@acme.in', password: 'demo1234', role: 'owner' },
-  { id: 'usr_finance', tenantId: TENANT.id, name: 'Priya Nair', email: 'finance@acme.in', password: 'demo1234', role: 'finance' },
-  { id: 'usr_hr', tenantId: TENANT.id, name: 'Anita Sharma', email: 'hr@acme.in', password: 'demo1234', role: 'hr' },
-  { id: 'usr_emp', tenantId: TENANT.id, name: 'Vikram Singh', email: 'vikram@acme.in', password: 'demo1234', role: 'employee', employeeId: 'emp_1001' },
+  { id: 'usr_owner', tenantId: TENANT.id, name: 'Rajesh Kumar', email: 'owner@acme.in', password: 'demo1234', role: 'owner', module: 'superadmin' },
+  { id: 'usr_finance', tenantId: TENANT.id, name: 'Priya Nair', email: 'finance@acme.in', password: 'demo1234', role: 'finance', module: 'finance' },
+  { id: 'usr_hr', tenantId: TENANT.id, name: 'Anita Sharma', email: 'hr@acme.in', password: 'demo1234', role: 'hr', module: 'hrms' },
+  { id: 'usr_emp', tenantId: TENANT.id, name: 'Vikram Singh', email: 'vikram@acme.in', password: 'demo1234', role: 'employee', employeeId: 'emp_1001', module: 'ess' },
 ];
 
 db.seed('platform_tenants', [TENANT]);

@@ -4,25 +4,15 @@ import {
   AppShell,
   Badge,
   Button,
-  Card,
-  DataTable,
-  FormField,
-  InsightCard,
-  Modal,
-  Select,
-  StatCard,
-  TextArea,
-  TextField,
   ThemeToggle,
   ToastProvider,
-  useToast,
-  type Column,
   type NavSection,
 } from '@/components';
-import { LowStockPieChart, RevenueChart, StockByWarehouseChart } from '@/components/charts';
 import { api, getStoredToken, setStoredToken } from '@/lib/api';
 import { ThemeProvider } from '@/lib/theme';
 
+import ModuleDashboardSlider from '@/pages/dashboard/ModuleDashboardSlider';
+import ModuleDashboard from '@/pages/dashboard/ModuleDashboard';
 import ChartOfAccounts from '@/pages/accounting/ChartOfAccounts';
 import JournalEntries from '@/pages/accounting/JournalEntries';
 import SalesInvoices from '@/pages/accounting/SalesInvoices';
@@ -75,34 +65,16 @@ import InspectionPlansPage from '@/pages/quality/InspectionPlans';
 import QCChecksPage from '@/pages/quality/Checks';
 import NonConformancesPage from '@/pages/quality/NonConformances';
 
-interface Invoice {
-  id: string;
-  number: string;
-  customerName: string;
-  total: number;
-  dueDate: string;
-  status: 'paid' | 'pending' | 'overdue' | 'approved' | 'cancelled';
-  paid: number;
-}
-
-const STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
-  paid: 'success',
-  pending: 'warning',
-  overdue: 'danger',
-  approved: 'info',
-  cancelled: 'neutral',
-};
-
 function useActiveNav() {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
   const NAV: NavSection[] = [
     {
-      title: 'Finance',
+      title: 'Finance & Accounts',
       items: [
         { label: 'Dashboard', to: '/', active: isActive('/') },
-        { label: 'Invoices', to: '/invoices', active: isActive('/invoices') },
-        { label: 'Expenses', to: '/expenses', active: isActive('/expenses') },
+        { label: 'Sales Invoices', to: '/invoices', active: isActive('/invoices') },
+        { label: 'Purchase Expenses', to: '/expenses', active: isActive('/expenses') },
         { label: 'GST & Compliance', to: '/compliance', active: isActive('/compliance'), badge: <Badge tone="info">3</Badge> },
       ],
     },
@@ -148,7 +120,7 @@ function useActiveNav() {
         { label: 'Items', to: '/manufacturing/items', active: isActive('/manufacturing/items') },
         { label: 'Stock', to: '/manufacturing/stock', active: isActive('/manufacturing/stock') },
         { label: 'Procurement', to: '/manufacturing/procurement', active: isActive('/manufacturing/procurement') },
-        { label: 'BOMs', to: '/manufacturing/boms', active: isActive('/manufacturing/boms') },
+        { label: 'Bills of Material', to: '/manufacturing/boms', active: isActive('/manufacturing/boms') },
         { label: 'Production', to: '/manufacturing/production', active: isActive('/manufacturing/production') },
         { label: 'Reports', to: '/manufacturing/reports', active: isActive('/manufacturing/reports') },
       ],
@@ -161,13 +133,13 @@ function useActiveNav() {
       ],
     },
     {
-      title: 'DMS',
+      title: 'Document Management',
       items: [
         { label: 'Documents', to: '/dms/documents', active: isActive('/dms/documents') },
       ],
     },
     {
-      title: 'ESS',
+      title: 'Employee Self-Service',
       items: [
         { label: 'Home', to: '/ess/home', active: isActive('/ess/home') },
         { label: 'Attendance', to: '/ess/attendance', active: isActive('/ess/attendance') },
@@ -177,7 +149,7 @@ function useActiveNav() {
       ],
     },
     {
-      title: 'AI',
+      title: 'Artificial Intelligence',
       items: [
         { label: 'Copilot', to: '/ai/copilot', active: isActive('/ai/copilot') },
         { label: 'Insights', to: '/ai/insights', active: isActive('/ai/insights') },
@@ -201,14 +173,14 @@ function useActiveNav() {
         { label: 'Vendors', to: '/procurement/vendors', active: isActive('/procurement/vendors') },
         { label: 'Vendor Quotes', to: '/procurement/vendor-quotes', active: isActive('/procurement/vendor-quotes') },
         { label: 'Contracts', to: '/procurement/contracts', active: isActive('/procurement/contracts') },
-        { label: 'GRNs', to: '/procurement/grns', active: isActive('/procurement/grns') },
+        { label: 'Goods Receipts', to: '/procurement/grns', active: isActive('/procurement/grns') },
       ],
     },
     {
       title: 'Projects',
       items: [
         { label: 'Projects', to: '/projects', active: isActive('/projects') },
-        { label: 'WBS', to: '/projects/wbs', active: isActive('/projects/wbs') },
+        { label: 'Work Breakdown', to: '/projects/wbs', active: isActive('/projects/wbs') },
         { label: 'Time Entries', to: '/projects/time-entries', active: isActive('/projects/time-entries') },
         { label: 'Budgets', to: '/projects/budgets', active: isActive('/projects/budgets') },
         { label: 'Reports', to: '/projects/reports', active: isActive('/projects/reports') },
@@ -226,22 +198,10 @@ function useActiveNav() {
   return NAV;
 }
 
-function DashboardScreen() {
-  const { notify } = useToast();
+function DashboardScreen({ user }: { user: any }) {
   const [token, setToken] = React.useState<string | null>(getStoredToken());
-  const [, setUser] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-
-  const [kpis, setKpis] = React.useState<any>(null);
-  const [invoices, setInvoices] = React.useState<Invoice[]>([]);
-  const [aiAlerts, setAiAlerts] = React.useState<{ level: string; text: string }[]>([]);
-  const [charts, setCharts] = React.useState<any>(null);
-
-  const [sort, setSort] = React.useState<{ key: string; dir: 'asc' | 'desc' }>();
-  const [page, setPage] = React.useState(1);
-  const [selected, setSelected] = React.useState<Set<string>>(new Set());
-  const [modalOpen, setModalOpen] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -255,24 +215,9 @@ function DashboardScreen() {
           if (cancelled) return;
           setToken(res.token);
           setStoredToken(res.token);
-          setUser(res.user);
         } else {
-          const me = await api.me();
-          if (cancelled) return;
-          setUser(me);
+          await api.me();
         }
-
-        const [dash, invRes, chartsRes] = await Promise.all([
-          api.getDashboard(),
-          api.getSalesInvoices({ pageSize: 100 }),
-          api.getDashboardCharts(),
-        ]);
-        if (cancelled) return;
-
-        setKpis(dash.kpis);
-        setAiAlerts(dash.aiAlerts ?? []);
-        setInvoices((invRes.rows ?? []).map((inv: any) => ({ ...inv, status: inv.status as Invoice['status'] })));
-        setCharts(chartsRes);
       } catch (err: any) {
         if (cancelled) return;
         setError(err.message ?? 'Failed to load data');
@@ -288,50 +233,6 @@ function DashboardScreen() {
       cancelled = true;
     };
   }, [token]);
-
-  const columns: Column<Invoice>[] = [
-    { key: 'number', header: 'Invoice #', sortable: true },
-    { key: 'customerName', header: 'Customer', sortable: true },
-    {
-      key: 'total',
-      header: 'Amount',
-      align: 'right',
-      sortable: true,
-      render: (row) => (
-        <span className="tabular-nums">{row.total.toLocaleString('en-IN')}</span>
-      ),
-    },
-    { key: 'dueDate', header: 'Due', hideBelow: 'md', render: (row) => row.dueDate },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (row) => (
-        <Badge tone={STATUS_TONE[row.status] ?? 'neutral'} withDot>
-          {row.status}
-        </Badge>
-      ),
-    },
-  ];
-
-  const sorted = React.useMemo(() => {
-    if (!sort) return invoices;
-    const copy = [...invoices];
-    copy.sort((a, b) => {
-      const dir = sort.dir === 'asc' ? 1 : -1;
-      if (sort.key === 'total') return (a.total - b.total) * dir;
-      if (sort.key === 'amount') return (a.total - b.total) * dir;
-      return String((a as any)[sort.key]).localeCompare(String((b as any)[sort.key])) * dir;
-    });
-    return copy;
-  }, [sort, invoices]);
-
-  const formatINR = (value: number, compact = false) =>
-    new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: compact ? 1 : 2,
-      notation: compact ? 'compact' : 'standard',
-    }).format(value);
 
   if (loading) {
     return (
@@ -354,147 +255,27 @@ function DashboardScreen() {
     );
   }
 
-  const anomalyAlert = aiAlerts.find((a) => a.level === 'danger' || a.level === 'warning');
+  if (user?.role === 'owner') {
+    return <ModuleDashboardSlider />;
+  }
 
-  return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-ink">Finance dashboard</h1>
-        <p className="mt-1 text-sm text-ink-muted">Cash position, receivables and AI-flagged anomalies.</p>
-      </div>
-
-      {kpis && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Cash position" value={formatINR(kpis.cash, true)} delta={kpis.cash > 0 ? 'Live balance' : '—'} trend="up" />
-          <StatCard label="Overdue receivables" value={formatINR(kpis.receivables, true)} delta={`${kpis.overdueInvoices ?? 0} overdue`} trend={kpis.overdueInvoices > 0 ? 'down' : 'flat'} />
-          <StatCard label="Revenue" value={formatINR(kpis.revenue, true)} delta="All time" trend="up" />
-          <StatCard label="Payables" value={formatINR(kpis.payables, true)} delta="Outstanding" trend="flat" />
-        </div>
-      )}
-
-      {charts && (
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-3">
-            <h2 className="font-display text-base font-semibold text-ink">Revenue vs Receivables</h2>
-            <p className="text-xs text-ink-muted">Last 6 months trend</p>
-            <div className="mt-4">
-              <RevenueChart data={charts.revenueTrend} />
-            </div>
-          </Card>
-          <Card>
-            <h2 className="font-display text-base font-semibold text-ink">Stock by Warehouse</h2>
-            <p className="text-xs text-ink-muted">Current inventory levels</p>
-            <div className="mt-4">
-              <StockByWarehouseChart data={charts.stockByWarehouse} />
-            </div>
-          </Card>
-          <Card>
-            <h2 className="font-display text-base font-semibold text-ink">Low Stock Alerts</h2>
-            <p className="text-xs text-ink-muted">Items below reorder level</p>
-            <div className="mt-4">
-              <LowStockPieChart data={charts.lowStockItems} />
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {anomalyAlert && (
-        <InsightCard
-          title="Anomaly detected"
-          action={<Button variant="ai" size="sm">Review flagged entries</Button>}
-        >
-          {anomalyAlert.text}
-        </InsightCard>
-      )}
-
-      <DataTable
-        caption="Sales invoices"
-        columns={columns}
-        data={sorted}
-        getRowId={(row) => row.id}
-        sortKey={sort?.key}
-        sortDirection={sort?.dir}
-        onSortChange={(key, dir) => setSort({ key, dir })}
-        selectedIds={selected}
-        onSelectionChange={setSelected}
-        pagination={{ page, pageSize: 20, total: sorted.length, onPageChange: setPage }}
-        emptyTitle="No invoices yet"
-        emptyDescription="Invoices you raise will appear here."
-      />
-
-      <Card>
-        <h2 className="font-display text-base font-semibold text-ink">New GST profile</h2>
-        <p className="mt-1 text-sm text-ink-muted">Configure how this entity files returns.</p>
-        <form
-          className="mt-4 grid gap-4 sm:grid-cols-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            notify({ title: 'Saved', description: 'GST profile updated.', tone: 'success' });
-          }}
-        >
-          <FormField label="GSTIN" htmlFor="gstin" required help="15-character GST identification number">
-            <TextField name="gstin" maxLength={15} placeholder="29ABCDE1234F1Z5" />
-          </FormField>
-          <FormField label="Filing frequency" htmlFor="freq" required>
-            <Select
-              name="freq"
-              placeholder="Select frequency"
-              options={[
-                { value: 'monthly', label: 'Monthly' },
-                { value: 'quarterly', label: 'Quarterly' },
-              ]}
-            />
-          </FormField>
-          <div className="sm:col-span-2">
-            <FormField label="Notes" htmlFor="notes">
-              <TextArea name="notes" placeholder="Optional notes for the assessor" />
-            </FormField>
-          </div>
-          <div className="sm:col-span-2 flex justify-end gap-2">
-            <Button variant="secondary" type="button" onClick={() => setModalOpen(true)}>
-              Cancel
-            </Button>
-            <Button type="submit" isLoading={false}>
-              Save GST profile
-            </Button>
-          </div>
-        </form>
-      </Card>
-
-      <Card padding="none">
-        <div className="p-5">
-          <h2 className="font-display text-base font-semibold text-ink">Badges</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Badge tone="neutral">Draft</Badge>
-            <Badge tone="success" withDot>Paid</Badge>
-            <Badge tone="warning" withDot>Pending</Badge>
-            <Badge tone="danger" withDot>Overdue</Badge>
-            <Badge tone="info">In review</Badge>
-            <Badge tone="ai">AI suggestion</Badge>
-          </div>
-        </div>
-      </Card>
-
-      <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Discard changes?"
-        description="Your unsaved GST profile edits will be lost."
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>Keep editing</Button>
-            <Button variant="danger" onClick={() => setModalOpen(false)}>Discard</Button>
-          </>
-        }
-      >
-        This action can&apos;t be undone from this screen.
-      </Modal>
-    </div>
-  );
+  const userModule = user?.module || 'sales';
+  return <ModuleDashboard module={userModule} />;
 }
 
 function App() {
   const NAV = useActiveNav();
+  const [user, setUser] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    api.me().then((u) => { if (!cancelled) setUser(u); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const greeting = user?.name
+    ? `Good ${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, ${user.name.split(' ')[0]}`
+    : 'Welcome';
 
   return (
     <AppShell
@@ -507,13 +288,13 @@ function App() {
       sections={NAV}
       topBar={
         <div className="flex items-center justify-between gap-4">
-          <div className="text-sm text-ink-muted">Module</div>
+          <div className="text-sm text-ink-muted">{greeting}</div>
           <ThemeToggle />
         </div>
       }
     >
       <Routes>
-        <Route path="/" element={<DashboardScreen />} />
+        <Route path="/" element={<DashboardScreen user={user} />} />
         <Route path="/invoices" element={<SalesInvoices />} />
         <Route path="/expenses" element={<PurchaseInvoices />} />
         <Route path="/compliance" element={<ComplianceDeadlines />} />

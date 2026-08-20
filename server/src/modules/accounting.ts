@@ -21,6 +21,8 @@ const COL = {
   budgets: 'accounting_budgets',
 };
 
+
+
 // ----------------------------- Seed data -----------------------------
 const accounts = [
   { id: 'acc_1001', tenantId: TID, code: '1001', name: 'Cash in Hand', type: 'Asset', isGroup: false, opening: 250000 },
@@ -129,14 +131,14 @@ const budgetSeed = [
   { id: 'bud_acct_015', tenantId: TID, department: 'HR', month: '2026-08', revenueBudget: 0, expenseBudget: 490000 },
 ];
 
-db.seed(COL.accounts, accounts);
-db.seed(COL.customers, customers);
-db.seed(COL.vendors, vendors);
-db.seed(COL.sales, salesSeed);
-db.seed(COL.purchases, purchaseSeed);
-db.seed(COL.banks, banks);
-db.seed(COL.gst, gstSeed);
-db.seed(COL.budgets, budgetSeed);
+
+
+
+
+
+
+
+
 
 // ----------------------------- Helpers -----------------------------
 function agingBuckets(invoices: any[], kind: 'receivable' | 'payable') {
@@ -159,41 +161,42 @@ function agingBuckets(invoices: any[], kind: 'receivable' | 'payable') {
 // ----------------------------- Routes -----------------------------
 // Chart of Accounts
 router.get('/accounts', requireAuth, asyncHandler(async (req, res) => {
-  let rows = db.all(TID, COL.accounts);
+  let rows = await db.all(TID, COL.accounts);
   if (req.query.type) rows = rows.filter((a) => a.type === req.query.type);
   res.json(listResult(rows, rows.length, 1, rows.length));
 }));
 router.post('/accounts', requireAuth, requireRole('finance', 'admin', 'owner'), asyncHandler(async (req, res) => {
   requireBody(req.body, ['code', 'name', 'type']);
-  const row = db.insert(TID, COL.accounts, { ...req.body, isGroup: false, opening: req.body.opening ?? 0 });
-  const a = actor(req); recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'create', module: 'accounting', recordRef: row.id, newState: row, ip: req.ip });
+  const row = await db.insert(TID, COL.accounts, { ...req.body, isGroup: false, opening: req.body.opening ?? 0 });
+  const a = actor(req); await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'create', module: 'accounting', recordRef: row.id, newState: row, ip: req.ip });
   res.status(201).json(row);
 }));
 
 // Journal entries
 router.get('/journal-entries', requireAuth, asyncHandler(async (req, res) => {
-  const rows = db.all(TID, COL.journals).sort((a, b) => b.date.localeCompare(a.date));
-  res.json(listResult(rows, rows.length, 1, rows.length));
+  const rows = await db.all(TID, COL.journals);
+  const sorted = rows.sort((a, b) => b.date.localeCompare(a.date));
+  res.json(listResult(sorted, sorted.length, 1, sorted.length));
 }));
 router.post('/journal-entries', requireAuth, requireRole('finance', 'admin', 'owner'), asyncHandler(async (req, res) => {
   requireBody(req.body, ['date', 'narration', 'entries']);
-  const row = db.insert(TID, COL.journals, { ...req.body, number: db.nextId('JE', COL.journals), status: 'draft' });
+  const row = await db.insert(TID, COL.journals, { ...req.body, number: await db.nextId('JE', COL.journals), status: 'draft' });
   res.status(201).json(row);
 }));
 router.post('/journal-entries/:id/post', requireAuth, requireRole('finance', 'admin', 'owner'), asyncHandler(async (req, res) => {
-  const updated = db.update(TID, COL.journals, req.params.id, { status: 'posted' });
+  const updated = await db.update(TID, COL.journals, req.params.id, { status: 'posted' });
   notFoundIfUndefined(updated, 'Journal entry not found');
-  const a = actor(req); recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'post', module: 'accounting', recordRef: updated.id, newState: { status: 'posted' }, ip: req.ip });
+  const a = actor(req); await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'post', module: 'accounting', recordRef: updated.id, newState: { status: 'posted' }, ip: req.ip });
   res.json(updated);
 }));
 
 // Customers & Vendors
 router.get('/customers', requireAuth, asyncHandler(async (req, res) => {
-  const rows = db.all(TID, COL.customers);
+  const rows = await db.all(TID, COL.customers);
   res.json(listResult(rows, rows.length, 1, rows.length));
 }));
 router.get('/vendors', requireAuth, asyncHandler(async (req, res) => {
-  const rows = db.all(TID, COL.vendors);
+  const rows = await db.all(TID, COL.vendors);
   res.json(listResult(rows, rows.length, 1, rows.length));
 }));
 
@@ -201,7 +204,8 @@ router.get('/vendors', requireAuth, asyncHandler(async (req, res) => {
 router.get('/sales-invoices', requireAuth, asyncHandler(async (req, res) => {
   const page = parseQueryInt(req.query.page, 1);
   const pageSize = parseQueryInt(req.query.pageSize, 20);
-  let rows = db.all(TID, COL.sales).sort((a, b) => b.date.localeCompare(a.date));
+  let rows = await db.all(TID, COL.sales);
+  const sorted = rows.sort((a, b) => b.date.localeCompare(a.date));
   if (req.query.status) rows = rows.filter((r) => r.status === req.query.status);
   const total = rows.length;
   const start = (page - 1) * pageSize;
@@ -209,90 +213,93 @@ router.get('/sales-invoices', requireAuth, asyncHandler(async (req, res) => {
 }));
 router.post('/sales-invoices', requireAuth, requireRole('finance', 'accountant', 'admin', 'owner'), asyncHandler(async (req, res) => {
   requireBody(req.body, ['customerId', 'date', 'dueDate', 'lineItems']);
-  const customer = db.byId(TID, COL.customers, req.body.customerId);
+  const customer = await db.byId(TID, COL.customers, req.body.customerId);
   notFoundIfUndefined(customer, 'Customer not found');
   const subtotal = req.body.lineItems.reduce((s: number, l: any) => s + l.amount, 0);
   const gstTotal = req.body.lineItems.reduce((s: number, l: any) => s + (l.amount * (l.gstRate ?? 0)) / 100, 0);
-  const row = db.insert(TID, COL.sales, {
-    number: db.nextId('INV', COL.sales),
+  const row = await db.insert(TID, COL.sales, {
+    number: await db.nextId('INV', COL.sales),
     customerName: customer.name,
     status: 'pending',
     subtotal, gstTotal: Math.round(gstTotal), total: Math.round(subtotal + gstTotal), paid: 0,
     ...req.body,
   });
-  const a = actor(req); recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'create', module: 'accounting', recordRef: row.number, newState: row, ip: req.ip });
+  const a = actor(req); await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'create', module: 'accounting', recordRef: row.number, newState: row, ip: req.ip });
   res.status(201).json(row);
 }));
 router.post('/sales-invoices/:id/receipts', requireAuth, requireRole('finance', 'accountant', 'admin', 'owner'), asyncHandler(async (req, res) => {
-  const inv = notFoundIfUndefined(db.byId(TID, COL.sales, req.params.id), 'Invoice not found');
+  const inv = notFoundIfUndefined(await db.byId(TID, COL.sales, req.params.id), 'Invoice not found');
   const amount = Number(req.body.amount);
   if (!amount || amount <= 0) throw ApiError.badRequest('amount must be positive');
-  db.insert(TID, COL.receipts, { id: db.nextId('rcpt', COL.receipts), salesInvoiceId: inv.id, date: req.body.date ?? new Date().toISOString().slice(0, 10), amount });
+  await db.insert(TID, COL.receipts, { id: await db.nextId('rcpt', COL.receipts), salesInvoiceId: inv.id, date: req.body.date ?? new Date().toISOString().slice(0, 10), amount });
   const paid = (inv.paid ?? 0) + amount;
   const status = paid >= inv.total ? 'paid' : inv.status;
-  const updated = db.update(TID, COL.sales, inv.id, { paid, status });
-  const a = actor(req); recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'update', module: 'accounting', recordRef: inv.number, newState: { paid }, ip: req.ip });
+  const updated = await db.update(TID, COL.sales, inv.id, { paid, status });
+  const a = actor(req); await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'update', module: 'accounting', recordRef: inv.number, newState: { paid }, ip: req.ip });
   res.json(updated);
 }));
 
 // Purchase invoices
 router.get('/purchase-invoices', requireAuth, asyncHandler(async (req, res) => {
-  const rows = db.all(TID, COL.purchases);
+  const rows = await db.all(TID, COL.purchases);
   res.json(listResult(rows, rows.length, 1, rows.length));
 }));
 router.post('/purchase-invoices/:id/approve', requireAuth, requireRole('finance', 'admin', 'owner'), asyncHandler(async (req, res) => {
-  const inv = notFoundIfUndefined(db.byId(TID, COL.purchases, req.params.id), 'Invoice not found');
-  const updated = db.update(TID, COL.purchases, inv.id, { status: 'approved' });
-  const a = actor(req); recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'approve', module: 'accounting', recordRef: inv.number, oldState: { status: inv.status }, newState: { status: 'approved' }, ip: req.ip });
+  const inv = notFoundIfUndefined(await db.byId(TID, COL.purchases, req.params.id), 'Invoice not found');
+  const updated = await db.update(TID, COL.purchases, inv.id, { status: 'approved' });
+  const a = actor(req); await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'approve', module: 'accounting', recordRef: inv.number, oldState: { status: inv.status }, newState: { status: 'approved' }, ip: req.ip });
   res.json(updated);
 }));
 router.post('/purchase-invoices/:id/payments', requireAuth, requireRole('finance', 'admin', 'owner'), asyncHandler(async (req, res) => {
-  const inv = notFoundIfUndefined(db.byId(TID, COL.purchases, req.params.id), 'Invoice not found');
+  const inv = notFoundIfUndefined(await db.byId(TID, COL.purchases, req.params.id), 'Invoice not found');
   const amount = Number(req.body.amount);
   if (!amount || amount <= 0) throw ApiError.badRequest('amount must be positive');
-  db.insert(TID, COL.payments, { id: db.nextId('pay', COL.payments), purchaseInvoiceId: inv.id, date: req.body.date ?? new Date().toISOString().slice(0, 10), amount });
+  await db.insert(TID, COL.payments, { id: await db.nextId('pay', COL.payments), purchaseInvoiceId: inv.id, date: req.body.date ?? new Date().toISOString().slice(0, 10), amount });
   const paid = (inv.paid ?? 0) + amount;
-  const updated = db.update(TID, COL.purchases, inv.id, { paid, status: paid >= inv.total ? 'paid' : inv.status });
+  const updated = await db.update(TID, COL.purchases, inv.id, { paid, status: paid >= inv.total ? 'paid' : inv.status });
   res.json(updated);
 }));
 
 // Banking
 router.get('/bank-accounts', requireAuth, asyncHandler(async (req, res) => {
-  res.json(db.all(TID, COL.banks));
+  res.json(await db.all(TID, COL.banks));
 }));
 
 // GST
 router.get('/gst/returns', requireAuth, asyncHandler(async (req, res) => {
-  let rows = db.all(TID, COL.gst);
+  let rows = await db.all(TID, COL.gst);
   if (req.query.type) rows = rows.filter((g) => g.type === req.query.type);
   if (req.query.status) rows = rows.filter((g) => g.status === req.query.status);
   res.json(listResult(rows, rows.length, 1, rows.length));
 }));
 router.post('/gst/returns/:id/file', requireAuth, requireRole('finance', 'admin', 'owner'), asyncHandler(async (req, res) => {
-  const ret = notFoundIfUndefined(db.byId(TID, COL.gst, req.params.id), 'Return not found');
-  const updated = db.update(TID, COL.gst, ret.id, { status: 'filed', filedOn: new Date().toISOString().slice(0, 10) });
-  const a = actor(req); recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'update', module: 'accounting', recordRef: ret.id, newState: { status: 'filed' }, ip: req.ip });
+  const ret = notFoundIfUndefined(await db.byId(TID, COL.gst, req.params.id), 'Return not found');
+  const updated = await db.update(TID, COL.gst, ret.id, { status: 'filed', filedOn: new Date().toISOString().slice(0, 10) });
+  const a = actor(req); await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'update', module: 'accounting', recordRef: ret.id, newState: { status: 'filed' }, ip: req.ip });
   res.json(updated);
 }));
 
 // Reports
 router.get('/reports/receivables-aging', requireAuth, asyncHandler(async (req, res) => {
-  res.json(agingBuckets(db.all(TID, COL.sales), 'receivable'));
+  res.json(agingBuckets(await db.all(TID, COL.sales), 'receivable'));
 }));
 router.get('/reports/payables-aging', requireAuth, asyncHandler(async (req, res) => {
-  res.json(agingBuckets(db.all(TID, COL.purchases), 'payable'));
+  res.json(agingBuckets(await db.all(TID, COL.purchases), 'payable'));
 }));
 router.get('/reports/trial-balance', requireAuth, asyncHandler(async (req, res) => {
-  const accountsList = db.all(TID, COL.accounts);
+  const accountsList = await db.all(TID, COL.accounts);
   const rows = accountsList.map((a) => ({ code: a.code, name: a.name, type: a.type, opening: a.opening, debit: 0, credit: 0, closing: a.opening }));
   const totalDebit = rows.reduce((s, r) => s + r.debit, 0);
   const totalCredit = rows.reduce((s, r) => s + r.credit, 0);
   res.json({ rows, totalDebit, totalCredit, balanced: totalDebit === totalCredit });
 }));
 router.get('/reports/profit-loss', requireAuth, asyncHandler(async (req, res) => {
-  const revenue = db.all(TID, COL.sales).reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
-  const purchases = db.all(TID, COL.purchases).reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
-  const gst = db.all(TID, COL.gst).filter((g) => g.status === 'filed').reduce((s, g) => s + g.totalTax, 0);
+  const revenueRows = await db.all(TID, COL.sales);
+  const purchaseRows = await db.all(TID, COL.purchases);
+  const gstRows = await db.all(TID, COL.gst);
+  const revenue = revenueRows.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
+  const purchases = purchaseRows.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
+  const gst = gstRows.filter((g) => g.status === 'filed').reduce((s, g) => s + g.totalTax, 0);
   const netProfit = revenue - purchases - gst;
   res.json({
     revenue, purchases, gstPaid: gst, operatingExpense: purchases + gst,
@@ -300,10 +307,13 @@ router.get('/reports/profit-loss', requireAuth, asyncHandler(async (req, res) =>
   });
 }));
 router.get('/reports/balance-sheet', requireAuth, asyncHandler(async (req, res) => {
-  const cash = db.all(TID, COL.banks).reduce((s, b) => s + b.balance, 0);
-  const debtors = db.all(TID, COL.sales).reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0);
+  const banks = await db.all(TID, COL.banks);
+  const sales = await db.all(TID, COL.sales);
+  const purchases = await db.all(TID, COL.purchases);
+  const cash = banks.reduce((s, b) => s + b.balance, 0);
+  const debtors = sales.reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0);
   const inventory = 12200000;
-  const creditors = db.all(TID, COL.purchases).reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0);
+  const creditors = purchases.reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0);
   const equity = 20000000;
   const assets = cash + debtors + inventory;
   const liabilities = creditors + equity;
@@ -316,13 +326,26 @@ router.get('/reports/balance-sheet', requireAuth, asyncHandler(async (req, res) 
 
 // Dashboard KPIs for the finance module
 router.get('/dashboard', requireAuth, asyncHandler(async (req, res) => {
-  const sales = db.all(TID, COL.sales);
-  const purchases = db.all(TID, COL.purchases);
+  const sales = await db.all(TID, COL.sales);
+  const purchases = await db.all(TID, COL.purchases);
+  const banks = await db.all(TID, COL.banks);
   const receivables = sales.reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0);
   const payables = purchases.reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0);
-  const cash = db.all(TID, COL.banks).reduce((s, b) => s + b.balance, 0);
+  const cash = banks.reduce((s, b) => s + b.balance, 0);
   const overdue = sales.filter((i) => i.status === 'overdue').length;
   res.json({ revenue: sales.reduce((s, i) => s + i.total, 0), receivables, payables, cash, overdueInvoices: overdue });
 }));
+
+async function init() {
+  await db.seed(COL.accounts, accounts);
+  await db.seed(COL.customers, customers);
+  await db.seed(COL.vendors, vendors);
+  await db.seed(COL.sales, salesSeed);
+  await db.seed(COL.purchases, purchaseSeed);
+  await db.seed(COL.banks, banks);
+  await db.seed(COL.gst, gstSeed);
+  await db.seed(COL.budgets, budgetSeed);
+}
+init().catch(console.error);
 
 export default router;

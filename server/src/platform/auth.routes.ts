@@ -24,8 +24,11 @@ const USERS: User[] = [
   { id: 'usr_emp', tenantId: TENANT.id, name: 'Vikram Singh', email: 'vikram@acme.in', password: 'demo1234', role: 'employee', employeeId: 'emp_1001', module: 'ess' },
 ];
 
-db.seed('platform_tenants', [TENANT]);
-db.seed('platform_users', USERS);
+async function init() {
+  await db.seed('platform_tenants', [TENANT]);
+  await db.seed('platform_users', USERS);
+}
+init().catch(console.error);
 
 /**
  * POST /api/auth/login
@@ -36,7 +39,8 @@ router.post(
   asyncHandler(async (req, res) => {
     const { email, password } = req.body ?? {};
     if (!email || !password) throw ApiError.badRequest('email and password are required');
-    const user = db.collection('platform_users').find((u) => u.email === email && u.tenantId === TENANT.id);
+    const users = await db.collection('platform_users');
+    const user = users.find((u: any) => u.email === email && u.tenantId === TENANT.id);
     if (!user || user.password !== password) throw ApiError.unauthorized('Invalid email or password');
     const principal = {
       id: user.id,
@@ -64,7 +68,7 @@ router.get(
   '/tenant',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const tenant = db.byId(req.user!.tenantId, 'platform_tenants', req.user!.tenantId);
+    const tenant = await db.byId(req.user!.tenantId, 'platform_tenants', req.user!.tenantId);
     res.json(tenant ?? null);
   })
 );

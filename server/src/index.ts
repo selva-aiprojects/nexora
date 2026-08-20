@@ -19,8 +19,11 @@ import crmRoutes from './modules/crm.js';
 import procurementRoutes from './modules/procurement.js';
 import projectsRoutes from './modules/projects.js';
 import qualityRoutes from './modules/quality.js';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 
-const app = express();
+export const app = express();
+export let server: ReturnType<typeof app.listen> | undefined;
 const PORT = Number(process.env.PORT ?? 4000);
 
 app.use(cors());
@@ -66,9 +69,20 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   return res.status(500).json({ error: 'internal_error', message });
 });
 
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`Nexora server listening on http://localhost:${PORT}`);
-  // eslint-disable-next-line no-console
-  console.log('Modules mounted: accounting, hrms, manufacturing, inventory, compliance, ess, dms, ai + platform (auth/audit/notifications/search/dashboard)');
-});
+// Serve frontend static files in production (Vercel serverless)
+const frontendDist = path.resolve(process.cwd(), '..', 'frontend', 'dist');
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
+
+if (process.env.NODE_ENV !== 'vercel') {
+  server = app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Nexora server listening on http://localhost:${PORT}`);
+    // eslint-disable-next-line no-console
+    console.log('Modules mounted: accounting, hrms, manufacturing, inventory, compliance, ess, dms, ai + platform (auth/audit/notifications/search/dashboard)');
+  });
+}

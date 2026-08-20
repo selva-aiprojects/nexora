@@ -28,7 +28,7 @@ export interface AuditEntry {
  * (approve, post, pay) calls this so the platform satisfies the PRD's
  * "every important business action must generate an audit event" requirement.
  */
-export function recordAudit(entry: {
+export async function recordAudit(entry: {
   tenantId: string;
   actorId: string;
   actorName: string;
@@ -38,13 +38,13 @@ export function recordAudit(entry: {
   oldState?: unknown;
   newState?: unknown;
   ip?: string;
-}): AuditEntry {
+}): Promise<AuditEntry> {
   const record: AuditEntry = {
-    id: db.nextId('aud', 'platform_audit'),
+    id: await db.nextId('aud', 'platform_audit'),
     timestamp: new Date().toISOString(),
     ip: entry.ip ?? '0.0.0.0',
     ...entry,
   };
-  db.collection('platform_audit').push(record);
+  await db.insert(entry.tenantId, 'platform_audit', record);
   return record;
 }

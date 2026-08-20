@@ -12,8 +12,11 @@
     "db:reset": "node scripts/reset-db.mjs"
   },
   "dependencies": {
+    "@vercel/postgres": "^0.10.0",
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "neon-serverless": "^0.5.3",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

@@ -2,5 +2,9 @@
   "name": "orchestra",
   "private": true,
   "version": "0.1.0",
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "vercel-build": "cd server && npm install && npx tsc -p tsconfig.json"
+  }
 }

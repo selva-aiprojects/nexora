@@ -15,12 +15,12 @@ router.get(
   asyncHandler(async (req, res) => {
     const tid = req.user!.tenantId;
 
-    const sales = db.all(tid, 'accounting_sales_invoices');
-    const purchases = db.all(tid, 'accounting_purchase_invoices');
-    const banks = db.all(tid, 'accounting_bank_accounts');
-    const stock = db.all(tid, 'manufacturing_stock');
-    const items = db.all(tid, 'manufacturing_items');
-    const payrollRuns = db.all(tid, 'hrms_payroll_runs');
+    const sales = await db.all(tid, 'accounting_sales_invoices');
+    const purchases = await db.all(tid, 'accounting_purchase_invoices');
+    const banks = await db.all(tid, 'accounting_bank_accounts');
+    const stock = await db.all(tid, 'manufacturing_stock');
+    const items = await db.all(tid, 'manufacturing_items');
+    const payrollRuns = await db.all(tid, 'hrms_payroll_runs');
 
     const revenue = sales.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
     const receivables = sales.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total - (i.paid ?? 0)), 0);
@@ -88,10 +88,10 @@ router.get(
 
 router.get('/charts', requireAuth, asyncHandler(async (req, res) => {
   const tid = req.user!.tenantId;
-  const sales = db.all(tid, 'accounting_sales_invoices');
-  const stock = db.all(tid, 'manufacturing_stock');
-  const warehouses = db.all(tid, 'manufacturing_warehouses');
-  const items = db.all(tid, 'manufacturing_items');
+  const sales = await db.all(tid, 'accounting_sales_invoices');
+  const stock = await db.all(tid, 'manufacturing_stock');
+  const warehouses = await db.all(tid, 'manufacturing_warehouses');
+  const items = await db.all(tid, 'manufacturing_items');
 
   const months = ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
   const baseRevenue = sales.reduce((s, i) => s + i.total, 0) / Math.max(1, sales.length);
@@ -157,10 +157,10 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
 
   switch (module) {
     case 'sales': {
-      const sales = db.all(tid, 'accounting_sales_invoices');
-      const customers = db.all(tid, 'accounting_customers');
-      const leads = db.all(tid, 'crm_leads');
-      const quotes = db.all(tid, 'crm_quotes');
+      const sales = await db.all(tid, 'accounting_sales_invoices');
+      const customers = await db.all(tid, 'accounting_customers');
+      const leads = await db.all(tid, 'crm_leads');
+      const quotes = await db.all(tid, 'crm_quotes');
       const totalRevenue = sales.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
       const totalPaid = sales.reduce((s, i) => s + (i.paid ?? 0), 0);
       const paidInvoices = sales.filter((i) => i.status === 'paid');
@@ -209,10 +209,10 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       break;
     }
     case 'finance': {
-      const sales = db.all(tid, 'accounting_sales_invoices');
-      const purchases = db.all(tid, 'accounting_purchase_invoices');
-      const banks = db.all(tid, 'accounting_bank_accounts');
-      const gst = db.all(tid, 'accounting_gst_returns');
+      const sales = await db.all(tid, 'accounting_sales_invoices');
+      const purchases = await db.all(tid, 'accounting_purchase_invoices');
+      const banks = await db.all(tid, 'accounting_bank_accounts');
+      const gst = await db.all(tid, 'accounting_gst_returns');
       const revenue = sales.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
       const payables = purchases.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total - (i.paid ?? 0)), 0);
       const cash = banks.reduce((s, b) => s + b.balance, 0);
@@ -225,7 +225,7 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       const arAging = arAgingBuckets(sales);
       const apTurn = apTurnover(purchases);
 
-      const budgets = db.all(tid, 'accounting_budgets');
+      const budgets = await db.all(tid, 'accounting_budgets');
       const actualSpend = purchases.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
       const budgetedSpend = budgets.reduce((s, b) => s + (b.amount || 0), 0);
       const budgetVariance = budgetedSpend > 0 ? ((actualSpend - budgetedSpend) / budgetedSpend) * 100 : 0;
@@ -278,12 +278,12 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       break;
     }
     case 'procurement': {
-      const vendors = db.all(tid, 'procurement_vendors');
-      const quotes = db.all(tid, 'procurement_vendor_quotes');
-      const contracts = db.all(tid, 'procurement_contracts');
-      const grns = db.all(tid, 'procurement_grns');
-      const purchaseOrders = db.all(tid, 'manufacturing_purchase_orders');
-      const pos = db.all(tid, 'manufacturing_purchase_orders');
+      const vendors = await db.all(tid, 'procurement_vendors');
+      const quotes = await db.all(tid, 'procurement_vendor_quotes');
+      const contracts = await db.all(tid, 'procurement_contracts');
+      const grns = await db.all(tid, 'procurement_grns');
+      const purchaseOrders = await db.all(tid, 'manufacturing_purchase_orders');
+      const pos = await db.all(tid, 'manufacturing_purchase_orders');
       const avgLeadTime = vendors.length > 0 ? vendors.reduce((s, v) => s + (v.rating || 3), 0) / vendors.length : 0;
       const leadTimes = pos.map((po) => {
         const grn = grns.find((g) => g.poId === po.id);
@@ -333,12 +333,12 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       break;
     }
     case 'inventory': {
-      const stock = db.all(tid, 'manufacturing_stock');
-      const warehouses = db.all(tid, 'manufacturing_warehouses');
-      const items = db.all(tid, 'manufacturing_items');
-      const adjustments = db.all(tid, 'inventory_adjustments');
-      const sales = db.all(tid, 'accounting_sales_invoices');
-      const salesOrders = db.all(tid, 'crm_sales_orders');
+      const stock = await db.all(tid, 'manufacturing_stock');
+      const warehouses = await db.all(tid, 'manufacturing_warehouses');
+      const items = await db.all(tid, 'manufacturing_items');
+      const adjustments = await db.all(tid, 'inventory_adjustments');
+      const sales = await db.all(tid, 'accounting_sales_invoices');
+      const salesOrders = await db.all(tid, 'crm_sales_orders');
       const cogs = sales.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total * 0.6), 0);
       const avgInventory = stock.reduce((s, st) => s + st.quantity, 0) / Math.max(1, items.length);
       const turnoverRate = avgInventory > 0 ? cogs / avgInventory : 0;
@@ -399,10 +399,10 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       break;
     }
     case 'crm': {
-      const customers = db.all(tid, 'crm_customers');
-      const leads = db.all(tid, 'crm_leads');
-      const quotes = db.all(tid, 'crm_quotes');
-      const salesOrders = db.all(tid, 'crm_sales_orders');
+      const customers = await db.all(tid, 'crm_customers');
+      const leads = await db.all(tid, 'crm_leads');
+      const quotes = await db.all(tid, 'crm_quotes');
+      const salesOrders = await db.all(tid, 'crm_sales_orders');
       const wonLeads = leads.filter((l) => l.status === 'won');
       const lostLeads = leads.filter((l) => l.status === 'lost');
       const conversionRate = leads.length > 0 ? (wonLeads.length / leads.length) * 100 : 0;
@@ -445,11 +445,11 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       break;
     }
     case 'hrms': {
-      const employees = db.all(tid, 'hrms_employees');
-      const attendance = db.all(tid, 'hrms_attendance');
-      const leaveApps = db.all(tid, 'hrms_leave_applications');
-      const payrollRuns = db.all(tid, 'hrms_payroll_runs');
-      const sales = db.all(tid, 'accounting_sales_invoices');
+      const employees = await db.all(tid, 'hrms_employees');
+      const attendance = await db.all(tid, 'hrms_attendance');
+      const leaveApps = await db.all(tid, 'hrms_leave_applications');
+      const payrollRuns = await db.all(tid, 'hrms_payroll_runs');
+      const sales = await db.all(tid, 'accounting_sales_invoices');
       const revenue = sales.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
       const activeEmployees = employees.filter((e) => e.status === 'active');
       const turnoverRate = employees.length > 0 ? ((employees.filter((e) => e.status === 'inactive').length / employees.length) * 100) : 0;
@@ -493,9 +493,9 @@ router.get('/:module', requireAuth, asyncHandler(async (req, res) => {
       break;
     }
     case 'manufacturing': {
-      const productionOrders = db.all(tid, 'manufacturing_production_orders');
-      const stock = db.all(tid, 'manufacturing_stock');
-      const items = db.all(tid, 'manufacturing_items');
+      const productionOrders = await db.all(tid, 'manufacturing_production_orders');
+      const stock = await db.all(tid, 'manufacturing_stock');
+      const items = await db.all(tid, 'manufacturing_items');
       const completedOrders = productionOrders.filter((o) => o.status === 'completed');
       const totalUnits = completedOrders.reduce((s, o) => s + (o.completedQty || 0), 0);
       const oee = productionOrders.length > 0 ? Math.round((completedOrders.length / productionOrders.length) * 100) : 0;

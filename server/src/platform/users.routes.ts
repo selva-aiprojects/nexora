@@ -35,14 +35,14 @@ function sanitize(user: User): ManagedUser {
 
 router.use(requireAuth);
 
-router.get('/', asyncHandler((req, res) => {
+router.get('/', asyncHandler(async (req, res) => {
   const page = parseQueryInt(req.query.page, 1);
   const pageSize = parseQueryInt(req.query.pageSize, 20);
   const role = req.query.role as string | undefined;
   const status = req.query.status as string | undefined;
   const search = req.query.search as string | undefined;
 
-  let rows = db.all(tenantId(req), COL);
+  let rows = await db.all(tenantId(req), COL);
   if (role) rows = rows.filter((r: any) => r.role === role);
   if (status) rows = rows.filter((r: any) => (r as any).status === status);
   if (search) {
@@ -55,7 +55,7 @@ router.get('/', asyncHandler((req, res) => {
   res.json(listResult(rows.slice(start, start + pageSize).map(sanitize), total, page, pageSize));
 }));
 
-router.get('/roles', asyncHandler((_req, res) => {
+router.get('/roles', asyncHandler(async (_req, res) => {
   const permissions: Record<Role, string[]> = {
     owner: ['*'],
     admin: ['dashboard', 'accounting', 'hrms', 'manufacturing', 'inventory', 'procurement', 'projects', 'quality', 'crm', 'compliance', 'dms', 'ess', 'ai', 'users', 'settings'],
@@ -70,23 +70,24 @@ router.get('/roles', asyncHandler((_req, res) => {
   });
 }));
 
-router.get('/:id', asyncHandler((req, res) => {
-  const user = db.byId(tenantId(req), COL, req.params.id);
+router.get('/:id', asyncHandler(async (req, res) => {
+  const user = await db.byId(tenantId(req), COL, req.params.id);
   res.json(sanitize(notFoundIfUndefined(user, 'User not found')));
 }));
 
-router.post('/', asyncHandler((req, res) => {
+router.post('/', asyncHandler(async (req, res) => {
   const { name, email, password, role, employeeId, status, module } = req.body;
   requireBody(req.body, ['name', 'email', 'password', 'role']);
 
-  const existing = db.collection(COL).find((u: any) => u.email === email && u.tenantId === tenantId(req));
+  const users = await db.collection(COL);
+  const existing = users.find((u: any) => u.email === email && u.tenantId === tenantId(req));
   if (existing) throw ApiError.conflict('Email already exists');
 
   if (!ROLES.includes(role)) throw ApiError.badRequest(`Invalid role. Allowed: ${ROLES.join(', ')}`);
   if (status && !STATUSES.includes(status)) throw ApiError.badRequest(`Invalid status. Allowed: ${STATUSES.join(', ')}`);
 
-  const user = db.insert(tenantId(req), COL, {
-    id: db.nextId('usr', COL),
+  const user = await db.insert(tenantId(req), COL, {
+    id: await await db.nextId('usr', COL),
     tenantId: tenantId(req),
     name,
     email,
@@ -101,25 +102,26 @@ router.post('/', asyncHandler((req, res) => {
   });
 
   const a = actor(req);
-  recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'create', module: 'users', recordRef: user.id, newState: sanitize(user), ip: req.ip });
+  await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'create', module: 'users', recordRef: user.id, newState: sanitize(user), ip: req.ip });
   res.status(201).json(sanitize(user));
 }));
 
-router.put('/:id', asyncHandler((req, res) => {
-  const existing = db.byId(tenantId(req), COL, req.params.id);
+router.put('/:id', asyncHandler(async (req, res) => {
+  const existing = await db.byId(tenantId(req), COL, req.params.id);
   notFoundIfUndefined(existing, 'User not found');
 
   const { name, email, password, role, employeeId, status, module } = req.body;
 
   if (email && email !== existing.email) {
-    const dup = db.collection(COL).find((u: any) => u.email === email && u.tenantId === tenantId(req) && u.id !== req.params.id);
+    const users = await db.collection(COL);
+    const dup = users.find((u: any) => u.email === email && u.tenantId === tenantId(req) && u.id !== req.params.id);
     if (dup) throw ApiError.conflict('Email already exists');
   }
 
   if (role && !ROLES.includes(role)) throw ApiError.badRequest(`Invalid role. Allowed: ${ROLES.join(', ')}`);
   if (status && !STATUSES.includes(status)) throw ApiError.badRequest(`Invalid status. Allowed: ${STATUSES.join(', ')}`);
 
-  const updated = db.update(tenantId(req), COL, req.params.id, {
+  const updated = await db.update(tenantId(req), COL, req.params.id, {
     ...(name !== undefined && { name }),
     ...(email !== undefined && { email }),
     ...(password !== undefined && { password }),
@@ -131,51 +133,54 @@ router.put('/:id', asyncHandler((req, res) => {
   });
 
   const a = actor(req);
-  recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'update', module: 'users', recordRef: updated.id, oldState: sanitize(existing), newState: sanitize(updated), ip: req.ip });
+  await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'update', module: 'users', recordRef: updated.id, oldState: sanitize(existing), newState: sanitize(updated), ip: req.ip });
   res.json(sanitize(updated));
 }));
 
-router.delete('/:id', asyncHandler((req, res) => {
-  const existing = db.byId(tenantId(req), COL, req.params.id);
+router.delete('/:id', asyncHandler(async (req, res) => {
+  const existing = await db.byId(tenantId(req), COL, req.params.id);
   notFoundIfUndefined(existing, 'User not found');
-  db.remove(tenantId(req), COL, req.params.id);
+  await db.remove(tenantId(req), COL, req.params.id);
   const a = actor(req);
-  recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'delete', module: 'users', recordRef: req.params.id, oldState: sanitize(existing), ip: req.ip });
+  await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'delete', module: 'users', recordRef: req.params.id, oldState: sanitize(existing), ip: req.ip });
   res.status(204).send();
 }));
 
-router.post('/:id/activate', asyncHandler((req, res) => {
-  const existing = db.byId(tenantId(req), COL, req.params.id);
+router.post('/:id/activate', asyncHandler(async (req, res) => {
+  const existing = await db.byId(tenantId(req), COL, req.params.id);
   notFoundIfUndefined(existing, 'User not found');
-  const updated = db.update(tenantId(req), COL, req.params.id, { status: 'active', updatedAt: new Date().toISOString() });
+  const updated = await db.update(tenantId(req), COL, req.params.id, { status: 'active', updatedAt: new Date().toISOString() });
   res.json(sanitize(updated));
 }));
 
-router.post('/:id/suspend', asyncHandler((req, res) => {
-  const existing = db.byId(tenantId(req), COL, req.params.id);
+router.post('/:id/suspend', asyncHandler(async (req, res) => {
+  const existing = await db.byId(tenantId(req), COL, req.params.id);
   notFoundIfUndefined(existing, 'User not found');
-  const updated = db.update(tenantId(req), COL, req.params.id, { status: 'suspended', updatedAt: new Date().toISOString() });
+  const updated = await db.update(tenantId(req), COL, req.params.id, { status: 'suspended', updatedAt: new Date().toISOString() });
   res.json(sanitize(updated));
 }));
 
-router.post('/:id/reset-password', asyncHandler((req, res) => {
-  const existing = db.byId(tenantId(req), COL, req.params.id);
+router.post('/:id/reset-password', asyncHandler(async (req, res) => {
+  const existing = await db.byId(tenantId(req), COL, req.params.id);
   notFoundIfUndefined(existing, 'User not found');
   const { password } = req.body;
   if (!password || password.length < 6) throw ApiError.badRequest('Password must be at least 6 characters');
-  const updated = db.update(tenantId(req), COL, req.params.id, { password, updatedAt: new Date().toISOString() });
+  const updated = await db.update(tenantId(req), COL, req.params.id, { password, updatedAt: new Date().toISOString() });
   const a = actor(req);
-  recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'update', module: 'users', recordRef: updated.id, newState: { passwordChanged: true }, ip: req.ip });
+  await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'update', module: 'users', recordRef: updated.id, newState: { passwordChanged: true }, ip: req.ip });
   res.json(sanitize(updated));
 }));
 
-db.seed(COL, [
-  { id: 'usr_owner', tenantId: TID, name: 'Rajesh Kumar', email: 'owner@acme.in', password: 'demo1234', role: 'owner', module: 'superadmin', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
-  { id: 'usr_admin', tenantId: TID, name: 'Sneha Patel', email: 'admin@acme.in', password: 'demo1234', role: 'admin', module: 'superadmin', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
-  { id: 'usr_finance', tenantId: TID, name: 'Priya Nair', email: 'finance@acme.in', password: 'demo1234', role: 'finance', module: 'finance', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
-  { id: 'usr_hr', tenantId: TID, name: 'Anita Sharma', email: 'hr@acme.in', password: 'demo1234', role: 'hr', module: 'hrms', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
-  { id: 'usr_mgr', tenantId: TID, name: 'Karthik Reddy', email: 'karthik@acme.in', password: 'demo1234', role: 'manager', module: 'manufacturing', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
-  { id: 'usr_emp', tenantId: TID, name: 'Vikram Singh', email: 'vikram@acme.in', password: 'demo1234', role: 'employee', employeeId: 'emp_1001', module: 'ess', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
-]);
+async function seedUsers() {
+  await db.seed(COL, [
+    { id: 'usr_owner', tenantId: TID, name: 'Rajesh Kumar', email: 'owner@acme.in', password: 'demo1234', role: 'owner', module: 'superadmin', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
+    { id: 'usr_admin', tenantId: TID, name: 'Sneha Patel', email: 'admin@acme.in', password: 'demo1234', role: 'admin', module: 'superadmin', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
+    { id: 'usr_finance', tenantId: TID, name: 'Priya Nair', email: 'finance@acme.in', password: 'demo1234', role: 'finance', module: 'finance', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
+    { id: 'usr_hr', tenantId: TID, name: 'Anita Sharma', email: 'hr@acme.in', password: 'demo1234', role: 'hr', module: 'hrms', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
+    { id: 'usr_mgr', tenantId: TID, name: 'Karthik Reddy', email: 'karthik@acme.in', password: 'demo1234', role: 'manager', module: 'manufacturing', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
+    { id: 'usr_emp', tenantId: TID, name: 'Vikram Singh', email: 'vikram@acme.in', password: 'demo1234', role: 'employee', employeeId: 'emp_1001', module: 'ess', status: 'active', lastLogin: null, createdAt: '2026-06-01', updatedAt: '2026-06-01' },
+  ]);
+}
+seedUsers().catch(console.error);
 
 export default router;

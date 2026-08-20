@@ -13,20 +13,26 @@ const SEED = [
   { id: 'ntf_00004', type: 'leave', title: 'Leave request awaiting you', body: 'Vikram Singh applied for 2 days casual leave', link: '/hrms/leave', channel: 'push' },
   { id: 'ntf_00005', type: 'inventory', title: 'Raw material below reorder level', body: 'Steel Coil (RM-004) stock at 120 kg vs reorder 500 kg', link: '/manufacturing/stock', channel: 'in_app' },
 ];
-db.seed(
-  'platform_notifications',
-  SEED.map((n) => ({ ...n, tenantId: 'tnt_acme', userId: null, read: false, createdAt: new Date().toISOString() }))
-);
+
+async function init() {
+  await db.seed(
+    'platform_notifications',
+    SEED.map((n) => ({ ...n, tenantId: 'tnt_acme', userId: null, read: false, createdAt: new Date().toISOString() }))
+  );
+}
+init().catch(console.error);
 
 /** GET /api/notifications — centralized notification center. */
 router.get(
   '/',
   requireAuth,
   asyncHandler(async (req, res) => {
-    let items = db.all(req.user!.tenantId, 'platform_notifications').slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    if (req.query.unread === 'true') items = items.filter((n) => !n.read);
+    const items = (await db.all(req.user!.tenantId, 'platform_notifications'))
+      .slice()
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    const filtered = req.query.unread === 'true' ? items.filter((n) => !n.read) : items;
     const unread = items.filter((n) => !n.read).length;
-    res.json({ rows: items, total: items.length, unread });
+    res.json({ rows: filtered, total: filtered.length, unread });
   })
 );
 
@@ -35,7 +41,7 @@ router.post(
   '/:id/read',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const updated = db.update(req.user!.tenantId, 'platform_notifications', req.params.id, { read: true });
+    const updated = await db.update(req.user!.tenantId, 'platform_notifications', req.params.id, { read: true });
     if (!updated) throw ApiError.notFound('Notification not found');
     res.json(updated);
   })

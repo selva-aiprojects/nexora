@@ -10,10 +10,9 @@ router.get(
   '/logs',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const all = db
-      .all(req.user!.tenantId, 'platform_audit')
+    const all = (await db.all(req.user!.tenantId, 'platform_audit'))
       .slice()
-      .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+      .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
     const { module } = req.query;
     const filtered = module ? all.filter((l) => l.module === module) : all;
     res.json({ rows: filtered, total: filtered.length });

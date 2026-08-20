@@ -8,15 +8,28 @@ const router = Router();
 const TID = 'tnt_acme';
 
 // ----------------------------- Helpers -----------------------------
-function salesOutstanding() { return db.all(TID, 'accounting_sales_invoices').reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0); }
-function purchaseOutstanding() { return db.all(TID, 'accounting_purchase_invoices').reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0); }
-function cashPosition() { return db.all(TID, 'accounting_bank_accounts').reduce((s, b) => s + b.balance, 0); }
-function revenue() { return db.all(TID, 'accounting_sales_invoices').reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0); }
+async function salesOutstanding() {
+  const rows = await db.all(TID, 'accounting_sales_invoices');
+  return rows.reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0);
+}
+async function purchaseOutstanding() {
+  const rows = await db.all(TID, 'accounting_purchase_invoices');
+  return rows.reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0);
+}
+async function cashPosition() {
+  const rows = await db.all(TID, 'accounting_bank_accounts');
+  return rows.reduce((s, b) => s + b.balance, 0);
+}
+async function revenue() {
+  const rows = await db.all(TID, 'accounting_sales_invoices');
+  return rows.reduce((s, i) => s + (i.status === 'cancelled' ? 0 : i.total), 0);
+}
 
-function payrollByDepartment() {
-  const depts = new Map(db.all(TID, 'hrms_departments').map((d) => [d.id, d.name]));
+async function payrollByDepartment() {
+  const depts = new Map((await db.all(TID, 'hrms_departments')).map((d: any) => [d.id, d.name]));
   const map = new Map<string, number>();
-  for (const e of db.all(TID, 'hrms_employees').filter((x) => x.status === 'active')) {
+  const employees = await db.all(TID, 'hrms_employees');
+  for (const e of employees.filter((x: any) => x.status === 'active')) {
     const sal = (e.salary.basic + e.salary.hra + e.salary.allowances) * 12; // annualized
     const name = depts.get(e.departmentId) ?? 'Unknown';
     map.set(name, (map.get(name) ?? 0) + sal);
@@ -24,18 +37,20 @@ function payrollByDepartment() {
   return [...map.entries()].sort((a, b) => b[1] - a[1]); // [dept, annualCost]
 }
 
-function lowerStock() {
-  const items = new Map(db.all(TID, 'manufacturing_items').map((i) => [i.id, i]));
-  return db.all(TID, 'manufacturing_stock')
-    .map((s) => ({ item: items.get(s.itemId), quantity: s.quantity }))
-    .filter((x) => x.item && x.quantity <= x.item.reorderLevel);
+async function lowerStock() {
+  const items = new Map((await db.all(TID, 'manufacturing_items')).map((i: any) => [i.id, i]));
+  const stock = await db.all(TID, 'manufacturing_stock');
+  return stock
+    .map((s: any) => ({ item: items.get(s.itemId), quantity: s.quantity }))
+    .filter((x: any) => x.item && x.quantity <= x.item.reorderLevel);
 }
 
-function overdueInvoices() {
+async function overdueInvoices() {
   const today = new Date();
-  return db.all(TID, 'accounting_sales_invoices')
-    .filter((i) => i.status === 'overdue' || (i.status !== 'paid' && i.status !== 'cancelled' && new Date(i.dueDate) < today))
-    .map((i) => ({ number: i.number, customer: i.customerName, amount: i.total - (i.paid ?? 0), dueDate: i.dueDate }));
+  const rows = await db.all(TID, 'accounting_sales_invoices');
+  return rows
+    .filter((i: any) => i.status === 'overdue' || (i.status !== 'paid' && i.status !== 'cancelled' && new Date(i.dueDate) < today))
+    .map((i: any) => ({ number: i.number, customer: i.customerName, amount: i.total - (i.paid ?? 0), dueDate: i.dueDate }));
 }
 
 // ----------------------------- Routes -----------------------------
@@ -52,31 +67,36 @@ router.post('/copilot', requireAuth, asyncHandler(async (req, res) => {
   let data: unknown = null;
 
   if (query.includes('receivable') || query.includes('outstanding')) {
-    answer = `Outstanding receivables are ₹${(salesOutstanding() / 100000).toFixed(2)}L across ${db.all(TID, 'accounting_sales_invoices').filter((i) => i.status !== 'paid').length} open invoices.`;
-    data = { receivables: salesOutstanding() };
+    const salesInv = await db.all(TID, 'accounting_sales_invoices');
+    const outstanding = salesInv.reduce((s, i) => s + (i.total - (i.paid ?? 0)), 0);
+    const openCount = salesInv.filter((i) => i.status !== 'paid').length;
+    answer = `Outstanding receivables are ₹${(outstanding / 100000).toFixed(2)}L across ${openCount} open invoices.`;
+    data = { receivables: outstanding };
   } else if (query.includes('overdue')) {
-    const ov = overdueInvoices();
+    const ov = await overdueInvoices();
     answer = ov.length ? `${ov.length} invoices are overdue. Top: ${ov[0]?.customer} (₹${ov[0]?.amount}).` : 'No overdue invoices right now.';
     data = ov;
   } else if (query.includes('reorder') || query.includes('stock below')) {
-    const low = lowerStock();
+    const low = await lowerStock();
     answer = low.length ? `${low.length} item(s) are below reorder level, including ${low[0].item.name}.` : 'All stock above reorder levels.';
     data = low;
   } else if (query.includes('payroll cost') || query.includes('highest payroll')) {
-    const pd = payrollByDepartment();
+    const pd = await payrollByDepartment();
     answer = `Highest payroll cost is ${pd[0]?.[0]} at ₹${(pd[0]?.[1] / 100000).toFixed(2)}L/yr.`;
     data = pd;
   } else if (query.includes('cash') || query.includes('cash flow')) {
-    answer = `Cash position is ₹${(cashPosition() / 100000).toFixed(2)}L. Payables outstanding ₹${(purchaseOutstanding() / 100000).toFixed(2)}L.`;
-    data = { cash: cashPosition(), payables: purchaseOutstanding() };
+    answer = `Cash position is ₹${(await cashPosition() / 100000).toFixed(2)}L. Payables outstanding ₹${(await purchaseOutstanding() / 100000).toFixed(2)}L.`;
+    data = { cash: await cashPosition(), payables: await purchaseOutstanding() };
   } else if (query.includes('pending approval') || query.includes('pending invoice')) {
-    const pinv = db.all(TID, 'accounting_purchase_invoices').filter((i) => i.status === 'pending' || i.status === 'approved').length;
-    const leave = db.all(TID, 'hrms_leave_applications').filter((l) => l.status === 'pending').length;
+    const pinvRows = await db.all(TID, 'accounting_purchase_invoices');
+    const pinv = pinvRows.filter((i) => i.status === 'pending' || i.status === 'approved').length;
+    const leaveRows = await db.all(TID, 'hrms_leave_applications');
+    const leave = leaveRows.filter((l) => l.status === 'pending').length;
     answer = `${pinv} purchase invoice(s) and ${leave} leave request(s) are awaiting approval.`;
     data = { purchaseInvoices: pinv, leave: leave };
   } else if (query.includes('revenue')) {
-    answer = `Total sales revenue is ₹${(revenue() / 100000).toFixed(2)}L.`;
-    data = { revenue: revenue() };
+    answer = `Total sales revenue is ₹${(await revenue() / 100000).toFixed(2)}L.`;
+    data = { revenue: await revenue() };
   }
 
   res.json({ query: req.body.query, answer, data });
@@ -89,7 +109,7 @@ router.get('/insights', requireAuth, asyncHandler(async (_req, res) => {
       { id: 'ins_001', title: 'Cash-flow trend', detail: 'Operating cash up 6.1% MoM; collections improved after dunning reminders.', trend: 'up' },
       { id: 'ins_002', title: 'Revenue change', detail: 'Revenue +12% vs last month, driven by Apex Pharma reorders.', trend: 'up' },
       { id: 'ins_003', title: 'Expense anomaly', detail: 'Power Components billing 18% above 3-month average.', trend: 'down' },
-      { id: 'ins_004', title: 'Receivable risk', detail: `${overdueInvoices().length} invoices overdue > 60 days; concentration in one customer.`, trend: 'down' },
+      { id: 'ins_004', title: 'Receivable risk', detail: `${(await overdueInvoices()).length} invoices overdue > 60 days; concentration in one customer.`, trend: 'down' },
       { id: 'ins_005', title: 'Vendor payment trend', detail: 'Steel Mart DSO widening; renegotiate terms to net-45.', trend: 'flat' },
       { id: 'ins_006', title: 'Margin deterioration', detail: 'FG-001 margin down 2.3 pts due to steel cost increase.', trend: 'down' },
     ],
@@ -99,16 +119,18 @@ router.get('/insights', requireAuth, asyncHandler(async (_req, res) => {
 /** GET /api/ai/anomalies — anomaly detection across modules. */
 router.get('/anomalies', requireAuth, asyncHandler(async (_req, res) => {
   const anomalies: any[] = [];
-
-  for (const inv of overdueInvoices()) {
+  const ov = await overdueInvoices();
+  for (const inv of ov) {
     anomalies.push({ type: 'overdue_receivable', severity: 'high', message: `Invoice ${inv.number} (${inv.customer}) overdue, ₹${inv.amount} outstanding.`, ref: inv.number });
   }
-  for (const s of lowerStock()) {
+  const low = await lowerStock();
+  for (const s of low) {
     anomalies.push({ type: 'low_stock', severity: 'medium', message: `${s.item.name} at ${s.quantity} ${s.item.uom} vs reorder ${s.item.reorderLevel}.`, ref: s.item.sku });
   }
   // duplicate invoice detection: same customer + same total
   const seen = new Map<string, any>();
-  for (const inv of db.all(TID, 'accounting_sales_invoices')) {
+  const salesInvoices = await db.all(TID, 'accounting_sales_invoices');
+  for (const inv of salesInvoices) {
     const key = `${inv.customerId}-${inv.total}`;
     if (seen.has(key)) {
       anomalies.push({ type: 'duplicate_invoice', severity: 'high', message: `Possible duplicate of ${seen.get(key).number} for ${inv.customerName} (₹${inv.total}).`, ref: inv.number });
@@ -145,10 +167,10 @@ router.post('/invoice-processing', requireAuth, asyncHandler(async (req, res) =>
   const amount = amountMatch ? Number(amountMatch[1].replace(/,/g, '')) : 0;
 
   const vendorName = vendorMatch ? vendorMatch[1].trim() : 'Unknown Vendor';
-  const openPOs = db.all(TID, 'manufacturing_purchase_orders').filter((p) => p.status === 'open');
-  const poMatch = openPOs.find((p) => p.vendorId && vendorName.toLowerCase().includes('steel'));
-  const existing = db.all(TID, 'accounting_purchase_invoices').filter((p) => Math.abs(p.total - amount) < 1 && p.vendorName?.toLowerCase().includes(vendorName.toLowerCase().slice(0, 6)));
-  const duplicate = existing.length > 0;
+  const openPOs = await db.all(TID, 'manufacturing_purchase_orders');
+  const poMatch = openPOs.filter((p: any) => p.status === 'open').find((p: any) => p.vendorId && vendorName.toLowerCase().includes('steel'));
+  const existing = await db.all(TID, 'accounting_purchase_invoices');
+  const duplicate = existing.filter((p: any) => Math.abs(p.total - amount) < 1 && p.vendorName?.toLowerCase().includes(vendorName.toLowerCase().slice(0, 6))).length > 0;
 
   res.json({
     extracted: {

@@ -27,6 +27,25 @@ ChartJS.register(
 
 const COLORS = ['#4338CA', '#2563EB', '#06B6D4', '#7C3AED', '#059669', '#D97706'];
 
+const THEME = {
+  primary: '#4338CA',
+  primaryLight: 'rgba(67, 56, 202, 0.1)',
+  cyan: '#06B6D4',
+  cyanLight: 'rgba(6, 182, 212, 0.1)',
+  blue: '#2563EB',
+  blueLight: 'rgba(37, 99, 235, 0.1)',
+  success: '#059669',
+  successLight: 'rgba(5, 150, 105, 0.1)',
+  danger: '#DC2626',
+  dangerLight: 'rgba(220, 38, 38, 0.1)',
+  warning: '#D97706',
+  warningLight: 'rgba(217, 119, 6, 0.1)',
+  ink: '#1F2937',
+  inkMuted: '#6B7280',
+  surface: '#FFFFFF',
+  border: '#E5E7EB',
+};
+
 function formatINR(value: number) {
   if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
   if (value >= 1000) return `₹${(value / 1000).toFixed(1)}k`;
@@ -51,13 +70,14 @@ const baseOptions = {
         font: { size: 10 },
         boxWidth: 10,
         padding: 8,
+        color: THEME.inkMuted,
       },
     },
     tooltip: {
-      backgroundColor: 'rgb(var(--nx-surface))',
-      titleColor: 'rgb(var(--nx-ink))',
-      bodyColor: 'rgb(var(--nx-ink-muted))',
-      borderColor: 'rgb(var(--nx-border))',
+      backgroundColor: THEME.surface,
+      titleColor: THEME.ink,
+      bodyColor: THEME.inkMuted,
+      borderColor: THEME.border,
       borderWidth: 1,
       padding: 8,
       cornerRadius: 4,
@@ -67,26 +87,26 @@ const baseOptions = {
   },
   scales: {
     x: {
-      ticks: { font: { size: 10 }, color: 'rgb(var(--nx-ink-muted))' },
+      ticks: { font: { size: 10 }, color: THEME.inkMuted },
       grid: { display: false },
       title: {
         display: true,
         text: '',
-        color: 'rgb(var(--nx-ink-muted))',
+        color: THEME.inkMuted,
         font: { size: 10 },
       },
     },
     y: {
       ticks: {
         font: { size: 10 },
-        color: 'rgb(var(--nx-ink-muted))',
+        color: THEME.inkMuted,
         callback: (value: any) => formatINR(value),
       },
-      grid: { color: 'rgb(var(--nx-border))' },
+      grid: { color: THEME.border },
       title: {
         display: true,
         text: '',
-        color: 'rgb(var(--nx-ink-muted))',
+        color: THEME.inkMuted,
         font: { size: 10 },
       },
     },
@@ -117,8 +137,8 @@ export function RevenueChart({ data }: { data: { month: string; revenue: number;
             {
               label: 'Revenue',
               data: data.map((d) => d.revenue),
-              borderColor: 'rgb(var(--nx-primary))',
-              backgroundColor: 'rgba(var(--nx-primary), 0.1)',
+              borderColor: THEME.primary,
+              backgroundColor: THEME.primaryLight,
               fill: true,
               tension: 0.3,
               pointRadius: 2,
@@ -127,8 +147,8 @@ export function RevenueChart({ data }: { data: { month: string; revenue: number;
             {
               label: 'Receivables',
               data: data.map((d) => d.receivables),
-              borderColor: 'rgb(var(--nx-ai-cyan))',
-              backgroundColor: 'rgba(var(--nx-ai-cyan), 0.1)',
+              borderColor: THEME.cyan,
+              backgroundColor: THEME.cyanLight,
               fill: true,
               tension: 0.3,
               pointRadius: 2,
@@ -165,7 +185,7 @@ export function StockByWarehouseChart({ data }: { data: { name: string; qty: num
             {
               label: 'Stock Qty',
               data: data.map((d) => d.qty),
-              backgroundColor: 'rgb(var(--nx-ai-blue))',
+              backgroundColor: THEME.blue,
               borderRadius: [4, 4, 0, 0],
             },
           ],
@@ -244,7 +264,7 @@ export function ARAgingChart({ data }: { data: { name: string; value: number }[]
             {
               label: 'AR Outstanding',
               data: data.map((d) => d.value),
-              backgroundColor: 'rgb(var(--nx-primary))',
+              backgroundColor: THEME.primary,
               borderRadius: [4, 4, 0, 0],
             },
           ],
@@ -263,6 +283,7 @@ export function StatusBreakdownChart({ data }: { data: { name: string; value: nu
       legend: { ...baseOptions.plugins.legend, display: true, position: 'bottom' as const },
     },
     scales: undefined as any,
+    cutout: '60%',
   };
 
   return (
@@ -298,6 +319,8 @@ export function LineChart({ data, dataKey, name, color, xAxisLabel, yAxisLabel }
     },
   };
 
+  const chartColor = color || THEME.primary;
+
   return (
     <div style={{ height: 220 }}>
       <Line
@@ -307,8 +330,8 @@ export function LineChart({ data, dataKey, name, color, xAxisLabel, yAxisLabel }
             {
               label: name,
               data: data.map((d) => d[dataKey] as number),
-              borderColor: color || 'rgb(var(--nx-primary))',
-              backgroundColor: color ? `${color}20` : 'rgba(var(--nx-primary), 0.1)',
+              borderColor: chartColor,
+              backgroundColor: chartColor + '20',
               fill: true,
               tension: 0.3,
               pointRadius: 2,
@@ -345,7 +368,7 @@ export function BarChartGeneric({ data, dataKey, name, color, xAxisLabel, yAxisL
             {
               label: name,
               data: data.map((d) => d[dataKey] as number),
-              backgroundColor: color || 'rgb(var(--nx-ai-blue))',
+              backgroundColor: color || THEME.blue,
               borderRadius: [4, 4, 0, 0],
             },
           ],

@@ -17,6 +17,15 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function PieLabel({ name, percent, ...rest }: any) {
+  const { x, y } = rest;
+  return (
+    <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fill="rgb(var(--nx-ink))" fontSize="10" fontWeight="500">
+      {name} {((percent ?? 0) * 100).toFixed(0)}%
+    </text>
+  );
+}
+
 export function RevenueChart({ data }: { data: { month: string; revenue: number; receivables: number }[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
@@ -85,6 +94,7 @@ export function LowStockPieChart({ data }: { data: { name: string; qty: number; 
           dataKey="value"
           nameKey="name"
           stroke="none"
+          label={<PieLabel />}
         >
           {chartData.map((_entry, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -117,6 +127,7 @@ export function ARAgingChart({ data }: { data: { name: string; value: number }[]
 }
 
 export function StatusBreakdownChart({ data }: { data: { name: string; value: number }[] }) {
+  const total = data.reduce((s, d) => s + (d.value || 0), 0);
   return (
     <ResponsiveContainer width="100%" height={260}>
       <PieChart>
@@ -130,12 +141,14 @@ export function StatusBreakdownChart({ data }: { data: { name: string; value: nu
           dataKey="value"
           nameKey="name"
           stroke="none"
+          label={<PieLabel />}
         >
           {data.map((_entry, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
         <Tooltip
+          formatter={(value: any) => [`${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`, '']}
           contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
         />
       </PieChart>
@@ -198,6 +211,7 @@ export function DonutChart({ data, dataKey, nameKey, centerLabel, centerValue, m
           dataKey={dataKey || 'value'}
           nameKey={nameKey || 'name'}
           stroke="none"
+          label={<PieLabel />}
         >
           {data.map((_entry, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

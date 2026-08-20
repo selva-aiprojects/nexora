@@ -20,7 +20,7 @@ function formatCurrency(value: number) {
 export function RevenueChart({ data }: { data: { month: string; revenue: number; receivables: number }[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
         <defs>
           <linearGradient id="nx-revenue" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="rgb(var(--nx-primary))" stopOpacity={0.3} />
@@ -32,10 +32,10 @@ export function RevenueChart({ data }: { data: { month: string; revenue: number;
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--nx-border))" />
-        <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
-        <YAxis tickFormatter={(v) => formatINR(v)} tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: 'Month', position: 'insideBottom', offset: -10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
+        <YAxis tickFormatter={(v) => formatINR(v)} tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: 'Amount (₹)', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
         <Tooltip
-          formatter={(value: any) => [formatINR(value as number), '']}
+          formatter={(value: any, name: any) => [formatINR(value as number), name]}
           contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
         />
         <Area type="monotone" dataKey="revenue" stroke="rgb(var(--nx-primary))" fill="url(#nx-revenue)" strokeWidth={2} name="Revenue" />
@@ -48,12 +48,12 @@ export function RevenueChart({ data }: { data: { month: string; revenue: number;
 export function StockByWarehouseChart({ data }: { data: { name: string; qty: number }[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--nx-border))" />
-        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: 'Warehouse', position: 'insideBottom', offset: -10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
+        <YAxis tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: 'Stock Qty', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
         <Tooltip
-          formatter={(value: any) => [(value as number).toLocaleString(), 'Qty']}
+          formatter={(value: any) => [`${(value as number).toLocaleString()} units`, 'Stock Qty']}
           contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
         />
         <Bar dataKey="qty" fill="rgb(var(--nx-ai-blue))" radius={[4, 4, 0, 0]} name="Stock Qty" />
@@ -102,10 +102,10 @@ export function LowStockPieChart({ data }: { data: { name: string; qty: number; 
 export function ARAgingChart({ data }: { data: { name: string; value: number }[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--nx-border))" />
-        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
-        <YAxis tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: 'Age Bucket', position: 'insideBottom', offset: -10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
+        <YAxis tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: 'Amount (₹)', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
         <Tooltip
           formatter={(value: any) => [formatINR(value as number), 'Outstanding']}
           contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
@@ -143,10 +143,10 @@ export function StatusBreakdownChart({ data }: { data: { name: string; value: nu
   );
 }
 
-export function LineChart({ data, dataKey, name, color }: { data: { name: string; [key: string]: number | string }[]; dataKey: string; name: string; color?: string }) {
+export function LineChart({ data, dataKey, name, color, xAxisLabel, yAxisLabel }: { data: { name: string; [key: string]: number | string }[]; dataKey: string; name: string; color?: string; xAxisLabel?: string; yAxisLabel?: string }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
         <defs>
           <linearGradient id={`nx-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor={color || 'rgb(var(--nx-primary))'} stopOpacity={0.3} />
@@ -154,8 +154,8 @@ export function LineChart({ data, dataKey, name, color }: { data: { name: string
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--nx-border))" />
-        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: xAxisLabel || 'Period', position: 'insideBottom', offset: -10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
+        <YAxis tickFormatter={(v) => formatINR(v)} tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: yAxisLabel || 'Amount (₹)', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
         <Tooltip
           formatter={(value: any) => [formatINR(value as number), name]}
           contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
@@ -166,13 +166,13 @@ export function LineChart({ data, dataKey, name, color }: { data: { name: string
   );
 }
 
-export function BarChartGeneric({ data, dataKey, name, color }: { data: { name: string; [key: string]: number | string }[]; dataKey: string; name: string; color?: string }) {
+export function BarChartGeneric({ data, dataKey, name, color, xAxisLabel, yAxisLabel }: { data: { name: string; [key: string]: number | string }[]; dataKey: string; name: string; color?: string; xAxisLabel?: string; yAxisLabel?: string }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--nx-border))" />
-        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: xAxisLabel || 'Category', position: 'insideBottom', offset: -10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
+        <YAxis tickFormatter={(v) => formatINR(v)} tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: yAxisLabel || 'Amount (₹)', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
         <Tooltip
           formatter={(value: any) => [formatINR(value as number), name]}
           contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
@@ -183,7 +183,7 @@ export function BarChartGeneric({ data, dataKey, name, color }: { data: { name: 
   );
 }
 
-export function DonutChart({ data, dataKey, nameKey, centerLabel, centerValue }: { data: { name: string; value: number }[]; dataKey?: string; nameKey?: string; centerLabel?: string; centerValue?: string }) {
+export function DonutChart({ data, dataKey, nameKey, centerLabel, centerValue, metricLabel }: { data: { name: string; value: number }[]; dataKey?: string; nameKey?: string; centerLabel?: string; centerValue?: string; metricLabel?: string }) {
   const total = data.reduce((s, d) => s + (d.value || 0), 0);
   return (
     <ResponsiveContainer width="100%" height={260}>
@@ -204,8 +204,9 @@ export function DonutChart({ data, dataKey, nameKey, centerLabel, centerValue }:
           ))}
         </Pie>
         <Tooltip
-          formatter={(value: any) => [`${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`, '']}
+          formatter={(value: any, name: any) => [`${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`, name]}
           contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
+          labelFormatter={(label) => `${metricLabel || 'Metric'}: ${label}`}
         />
         {centerLabel && (
           <text x="50%" y="50%" textAnchor="middle" dy="-0.2em" fill="rgb(var(--nx-ink))" fontSize="12" fontWeight="500">
@@ -222,10 +223,10 @@ export function DonutChart({ data, dataKey, nameKey, centerLabel, centerValue }:
   );
 }
 
-export function MultiLineChart({ data, lines }: { data: { name: string; [key: string]: number | string }[]; lines: { dataKey: string; name: string; color: string }[] }) {
+export function MultiLineChart({ data, lines, xAxisLabel, yAxisLabel }: { data: { name: string; [key: string]: number | string }[]; lines: { dataKey: string; name: string; color: string }[]; xAxisLabel?: string; yAxisLabel?: string }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
         <defs>
           {lines.map((line) => (
             <linearGradient key={line.dataKey} id={`nx-${line.dataKey}`} x1="0" y1="0" x2="0" y2="1">
@@ -235,8 +236,8 @@ export function MultiLineChart({ data, lines }: { data: { name: string; [key: st
           ))}
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--nx-border))" />
-        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: xAxisLabel || 'Period', position: 'insideBottom', offset: -10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
+        <YAxis tickFormatter={(v) => formatINR(v)} tick={{ fontSize: 12, fill: 'rgb(var(--nx-ink-muted))' }} axisLine={false} tickLine={false} label={{ value: yAxisLabel || 'Amount (₹)', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: 'rgb(var(--nx-ink-muted))' }} />
         <Tooltip
           formatter={(value: any, name: any) => [formatINR(value as number), name]}
           contentStyle={{ background: 'rgb(var(--nx-surface))', border: '1px solid rgb(var(--nx-border))', borderRadius: 'var(--nx-radius-md)', boxShadow: 'var(--nx-shadow-md)' }}
@@ -250,20 +251,20 @@ export function MultiLineChart({ data, lines }: { data: { name: string; [key: st
   );
 }
 
-export function MetricsTable({ title, columns, data, format }: { title: string; columns: { key: string; label: string; format?: string }[]; data: any[]; format?: (value: any, key: string) => string }) {
+export function MetricsTable({ title, columns, data, format, metricLabel }: { title: string; columns: { key: string; label: string; format?: string }[]; data: any[]; format?: (value: any, key: string) => string; metricLabel?: string }) {
   if (!data || data.length === 0) return null;
   return (
     <Card padding="md">
       <h3 className="font-display text-base font-semibold text-ink">{title}</h3>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-border bg-canvas/60 text-ink-muted">
-              {columns.map((col) => (
-                <th key={col.key} className="px-3 py-2 font-medium">{col.label}</th>
-              ))}
-            </tr>
-          </thead>
+              <thead>
+                <tr className="border-b border-border bg-canvas/60 text-ink-muted">
+                  {columns.map((col) => (
+                    <th key={col.key} className="px-3 py-2 font-medium">{col.label}{metricLabel && col.format === 'currency' ? ` (${metricLabel})` : ''}</th>
+                  ))}
+                </tr>
+              </thead>
           <tbody>
             {data.slice(0, 8).map((row: any, idx: number) => (
               <tr key={idx} className="border-b border-border last:border-0 hover:bg-canvas/40">

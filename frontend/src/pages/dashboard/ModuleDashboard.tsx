@@ -214,23 +214,29 @@ export default function ModuleDashboard({ module }: { module: string }) {
       if (chartKey.includes('Aging') || chartKey.includes('aging')) {
         chartComponent = <ARAgingChart data={numericData} />;
       } else if (chartKey.includes('Breakdown') || chartKey.includes('breakdown') || chartKey.includes('Status')) {
-        chartComponent = <DonutChart data={numericData} centerLabel="Total" centerValue={String(numericData.reduce((s, d) => s + d.value, 0))} />;
+        const metricLabel = chartKey.includes('invoice') || chartKey.includes('Invoice') ? 'Invoices' : chartKey.includes('lead') || chartKey.includes('Lead') ? 'Leads' : chartKey.includes('vendor') || chartKey.includes('Vendor') ? 'Vendors' : chartKey.includes('gst') || chartKey.includes('GST') ? 'Returns' : 'Count';
+        chartComponent = <DonutChart data={numericData} centerLabel="Total" centerValue={String(numericData.reduce((s, d) => s + d.value, 0))} metricLabel={metricLabel} />;
       } else if (chartKey.includes('Warehouse') || chartKey.includes('warehouse')) {
         chartComponent = <StockByWarehouseChart data={numericData} />;
       } else if (chartKey.includes('Trend') || chartKey.includes('trend')) {
         const keys = Object.keys(chartData[0]).filter((k) => k !== 'name');
+        const isFinancial = keys.some((k) => k === 'revenue' || k === 'receivables' || k === 'inflow' || k === 'outflow');
+        const isAttendance = keys.some((k) => k === 'present' || k === 'absent');
+        const isProduction = keys.some((k) => k === 'units' || k === 'oee' || k === 'scrap');
         chartComponent = (
           <MultiLineChart
             data={chartData}
             lines={keys.map((k) => ({
               dataKey: k,
               name: k.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase()),
-              color: k === 'revenue' || k === 'inflow' ? 'rgb(var(--nx-primary))' : k === 'receivables' || k === 'outflow' || k === 'absent' ? 'rgb(var(--nx-ai-cyan))' : k === 'units' || k === 'spend' ? 'rgb(var(--nx-success))' : 'rgb(var(--nx-ai-blue))',
+              color: k === 'revenue' || k === 'inflow' || k === 'won' ? 'rgb(var(--nx-primary))' : k === 'receivables' || k === 'outflow' || k === 'absent' || k === 'scrap' ? 'rgb(var(--nx-ai-cyan))' : k === 'units' || k === 'spend' ? 'rgb(var(--nx-success))' : 'rgb(var(--nx-ai-blue))',
             }))}
+            xAxisLabel="Period"
+            yAxisLabel={isFinancial ? 'Amount (₹)' : isAttendance ? 'Employees' : isProduction ? 'Units / %' : 'Count'}
           />
         );
       } else if (chartKey.includes('department') || chartKey.includes('Department')) {
-        chartComponent = <BarChartGeneric data={numericData} dataKey="value" name="Employees" color="rgb(var(--nx-primary))" />;
+        chartComponent = <BarChartGeneric data={numericData} dataKey="value" name="Employees" color="rgb(var(--nx-primary))" xAxisLabel="Department" yAxisLabel="Employees" />;
       } else if (chartKey.includes('attendance') || chartKey.includes('Attendance')) {
         const keys = Object.keys(chartData[0]).filter((k) => k !== 'name');
         chartComponent = (
@@ -241,12 +247,14 @@ export default function ModuleDashboard({ module }: { module: string }) {
               name: k.charAt(0).toUpperCase() + k.slice(1),
               color: k === 'present' ? 'rgb(var(--nx-success))' : 'rgb(var(--nx-danger))',
             }))}
+            xAxisLabel="Day"
+            yAxisLabel="Employees"
           />
         );
       } else if (chartKey.includes('Volume') || chartKey.includes('volume')) {
-        chartComponent = <BarChartGeneric data={numericData} dataKey="units" name="Units" color="rgb(var(--nx-primary))" />;
+        chartComponent = <BarChartGeneric data={numericData} dataKey="units" name="Units" color="rgb(var(--nx-primary))" xAxisLabel="Month" yAxisLabel="Units" />;
       } else {
-        chartComponent = <BarChartGeneric data={numericData} dataKey="value" name="Count" color="rgb(var(--nx-ai-blue))" />;
+        chartComponent = <BarChartGeneric data={numericData} dataKey="value" name="Count" color="rgb(var(--nx-ai-blue))" xAxisLabel="Category" yAxisLabel="Count" />;
       }
 
       return (
@@ -275,12 +283,16 @@ export default function ModuleDashboard({ module }: { module: string }) {
           : 'number',
       }));
 
+      const currencyColumns = columns.filter((c) => c.format === 'currency');
+      const metricLabel = currencyColumns.length > 0 ? 'INR' : undefined;
+
       return (
         <MetricsTable
           key={tableKey}
           title={tableKey.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
           columns={columns}
           data={tableData.slice(0, 8)}
+          metricLabel={metricLabel}
         />
       );
     });

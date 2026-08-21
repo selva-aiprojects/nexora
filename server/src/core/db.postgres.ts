@@ -40,7 +40,8 @@ export class PostgresStore implements Store {
       const tenantId = row.tenantId ?? 'tenant-default';
       const record = { tenantId, ...row };
       await this.pool.query(
-        `INSERT INTO "${t}" (id, "tenantId", data) VALUES ($1, $2, $3::jsonb) ON CONFLICT (id) DO NOTHING`,
+        `INSERT INTO "${t}" (id, "tenantId", data) VALUES ($1, $2, $3::jsonb)
+         ON CONFLICT (id) DO UPDATE SET "tenantId" = EXCLUDED."tenantId", data = EXCLUDED.data`,
         [record.id, tenantId, JSON.stringify(record)]
       );
     }

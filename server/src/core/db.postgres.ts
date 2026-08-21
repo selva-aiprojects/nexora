@@ -41,10 +41,12 @@ export class PostgresStore implements Store {
       DO $$
       BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '${t}' AND column_name = 'tenantid') THEN
-          ALTER TABLE "${t}" ALTER COLUMN "tenantid" DROP NOT NULL;
+          ALTER TABLE "${t}" RENAME COLUMN "tenantid" TO "tenantid_old";
+          ALTER TABLE "${t}" ALTER COLUMN "tenantid_old" DROP NOT NULL;
         END IF;
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '${t}' AND column_name = 'tenant_id') THEN
-          ALTER TABLE "${t}" ALTER COLUMN "tenant_id" DROP NOT NULL;
+          ALTER TABLE "${t}" RENAME COLUMN "tenant_id" TO "tenant_id_old";
+          ALTER TABLE "${t}" ALTER COLUMN "tenant_id_old" DROP NOT NULL;
         END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '${t}' AND column_name = 'tenantId') THEN
           ALTER TABLE "${t}" ADD COLUMN "tenantId" TEXT NOT NULL DEFAULT '';

@@ -1947,7 +1947,132 @@ export const api = {
     }),
 
   getRoles: () => request<{ roles: RoleOption[] }>('/users/roles'),
+
+  // Fixed Assets
+  getAssets: (params?: { category?: string; status?: string; search?: string; page?: number; pageSize?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.category) qs.set('category', params.category);
+    if (params?.status) qs.set('status', params.status);
+    if (params?.search) qs.set('search', params.search);
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.pageSize) qs.set('pageSize', String(params.pageSize));
+    const q = qs.toString();
+    return request<AssetListResult>(`/assets${q ? `?${q}` : ''}`);
+  },
+
+  getAsset: (id: string) => request<Asset>(`/assets/${encodeURIComponent(id)}`),
+
+  createAsset: (body: Partial<Asset>) =>
+    request<Asset>('/assets', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  depreciateAsset: (id: string, body?: { periodDate?: string }) =>
+    request<{ asset: Asset; depreciation: AssetDepreciationEntry; message: string }>(`/assets/${encodeURIComponent(id)}/depreciate`, {
+      method: 'POST',
+      body: JSON.stringify(body || {}),
+    }),
+
+  batchDepreciateAssets: (body?: { periodDate?: string }) =>
+    request<{ periodDate: string; processedCount: number; totalDepreciationAmount: number; assets: any[]; message: string }>('/assets/batch-depreciate', {
+      method: 'POST',
+      body: JSON.stringify(body || {}),
+    }),
+
+  disposeAsset: (id: string, body: { saleProceeds?: number; disposalDate?: string; reason?: string }) =>
+    request<{ asset: Asset; gainOrLoss: number; message: string }>(`/assets/${encodeURIComponent(id)}/dispose`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  deleteAsset: (id: string) =>
+    request<void>(`/assets/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+
+  // Currencies & FX
+  getCurrencies: () => request<CurrenciesResponse>('/currencies'),
+
+  updateExchangeRate: (body: { code: string; rate: number; name?: string; symbol?: string }) =>
+    request<{ currency: CurrencyRate; message: string }>('/currencies/rates', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  convertCurrency: (body: { from: string; to: string; amount: number }) =>
+    request<{ from: string; to: string; originalAmount: number; convertedAmount: number; effectiveRate: number; baseCurrencyAmount: number }>('/currencies/convert', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 };
+
+export interface Asset {
+  id: string;
+  assetNumber: string;
+  name: string;
+  category: string;
+  purchaseDate: string;
+  purchaseCost: number;
+  salvageValue: number;
+  usefulLifeMonths: number;
+  depreciationMethod: 'SLM' | 'WDV';
+  depreciationRate: number;
+  accumulatedDepreciation: number;
+  bookValue: number;
+  status: 'active' | 'disposed' | 'written_off' | 'under_maintenance';
+  serialNumber?: string;
+  location?: string;
+  costCenter?: string;
+  vendor?: string;
+  warrantyExpiry?: string;
+  lastDepreciationDate?: string;
+  disposalDate?: string;
+  saleProceeds?: number;
+  gainOrLoss?: number;
+  disposalReason?: string;
+  createdAt: string;
+  updatedAt: string;
+  depreciationHistory?: AssetDepreciationEntry[];
+}
+
+export interface AssetDepreciationEntry {
+  id: string;
+  assetId: string;
+  assetNumber: string;
+  assetName: string;
+  periodDate: string;
+  amount: number;
+  accumulatedDepreciation: number;
+  bookValue: number;
+  journalRef: string;
+  createdAt: string;
+}
+
+export interface AssetListResult extends ListResult<Asset> {
+  metrics: {
+    totalAssets: number;
+    activeAssets: number;
+    totalCost: number;
+    totalAccumulatedDepreciation: number;
+    totalBookValue: number;
+  };
+}
+
+export interface CurrencyRate {
+  id: string;
+  code: string;
+  name: string;
+  symbol: string;
+  rate: number;
+  isBase: boolean;
+  updatedAt: string;
+}
+
+export interface CurrenciesResponse {
+  baseCurrency: string;
+  currencies: CurrencyRate[];
+}
 
 export function getStoredToken(): string | null {
   return getToken();

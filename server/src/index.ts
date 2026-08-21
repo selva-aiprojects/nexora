@@ -19,6 +19,8 @@ import crmRoutes from './modules/crm.js';
 import procurementRoutes from './modules/procurement.js';
 import projectsRoutes from './modules/projects.js';
 import qualityRoutes from './modules/quality.js';
+import { assetsRouter as assetsRoutes } from './modules/assets.js';
+import { currenciesRouter as currenciesRoutes } from './modules/currencies.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 
@@ -58,6 +60,8 @@ app.use('/api/crm', crmRoutes);
 app.use('/api/procurement', procurementRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/quality', qualityRoutes);
+app.use('/api/assets', assetsRoutes);
+app.use('/api/currencies', currenciesRoutes);
 
 // 404 for unknown API routes
 app.use('/api', (_req, res) => {

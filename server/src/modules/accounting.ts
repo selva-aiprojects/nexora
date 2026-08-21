@@ -215,13 +215,24 @@ router.post('/sales-invoices', requireAuth, requireRole('finance', 'accountant',
   requireBody(req.body, ['customerId', 'date', 'dueDate', 'lineItems']);
   const customer = await db.byId(TID, COL.customers, req.body.customerId);
   notFoundIfUndefined(customer, 'Customer not found');
+  const currency = req.body.currency || 'INR';
+  const exchangeRate = Number(req.body.exchangeRate) || 1.0;
   const subtotal = req.body.lineItems.reduce((s: number, l: any) => s + l.amount, 0);
   const gstTotal = req.body.lineItems.reduce((s: number, l: any) => s + (l.amount * (l.gstRate ?? 0)) / 100, 0);
+  const total = Math.round(subtotal + gstTotal);
+  const baseCurrencyTotal = Math.round(total * exchangeRate);
+
   const row = await db.insert(TID, COL.sales, {
     number: await db.nextId('INV', COL.sales),
     customerName: customer.name,
     status: 'pending',
-    subtotal, gstTotal: Math.round(gstTotal), total: Math.round(subtotal + gstTotal), paid: 0,
+    currency,
+    exchangeRate,
+    subtotal,
+    gstTotal: Math.round(gstTotal),
+    total,
+    baseCurrencyTotal,
+    paid: 0,
     ...req.body,
   });
   const a = actor(req); await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'create', module: 'accounting', recordRef: row.number, newState: row, ip: req.ip });
@@ -231,12 +242,31 @@ router.post('/sales-invoices/:id/receipts', requireAuth, requireRole('finance', 
   const inv = notFoundIfUndefined(await db.byId(TID, COL.sales, req.params.id), 'Invoice not found');
   const amount = Number(req.body.amount);
   if (!amount || amount <= 0) throw ApiError.badRequest('amount must be positive');
-  await db.insert(TID, COL.receipts, { id: await db.nextId('rcpt', COL.receipts), salesInvoiceId: inv.id, date: req.body.date ?? new Date().toISOString().slice(0, 10), amount });
+
+  const settlementRate = Number(req.body.settlementRate) || inv.exchangeRate || 1.0;
+  const invoiceRate = Number(inv.exchangeRate) || 1.0;
+  let fxGainLoss = 0;
+  if (inv.currency && inv.currency !== 'INR') {
+    fxGainLoss = Math.round((settlementRate - invoiceRate) * amount * 100) / 100;
+  }
+
+  const receipt = {
+    id: await db.nextId('rcpt', COL.receipts),
+    salesInvoiceId: inv.id,
+    date: req.body.date ?? new Date().toISOString().slice(0, 10),
+    amount,
+    currency: inv.currency || 'INR',
+    settlementRate,
+    fxGainLoss,
+  };
+  await db.insert(TID, COL.receipts, receipt);
+
   const paid = (inv.paid ?? 0) + amount;
   const status = paid >= inv.total ? 'paid' : inv.status;
-  const updated = await db.update(TID, COL.sales, inv.id, { paid, status });
-  const a = actor(req); await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'update', module: 'accounting', recordRef: inv.number, newState: { paid }, ip: req.ip });
-  res.json(updated);
+  const totalFxGainLoss = ((inv.totalFxGainLoss ?? 0) + fxGainLoss);
+  const updated = await db.update(TID, COL.sales, inv.id, { paid, status, totalFxGainLoss });
+  const a = actor(req); await recordAudit({ tenantId: TID, actorId: a.id, actorName: a.name, action: 'update', module: 'accounting', recordRef: inv.number, newState: { paid, fxGainLoss }, ip: req.ip });
+  res.json({ invoice: updated, receipt, fxGainLoss });
 }));
 
 // Purchase invoices
@@ -254,10 +284,30 @@ router.post('/purchase-invoices/:id/payments', requireAuth, requireRole('finance
   const inv = notFoundIfUndefined(await db.byId(TID, COL.purchases, req.params.id), 'Invoice not found');
   const amount = Number(req.body.amount);
   if (!amount || amount <= 0) throw ApiError.badRequest('amount must be positive');
-  await db.insert(TID, COL.payments, { id: await db.nextId('pay', COL.payments), purchaseInvoiceId: inv.id, date: req.body.date ?? new Date().toISOString().slice(0, 10), amount });
+
+  const settlementRate = Number(req.body.settlementRate) || inv.exchangeRate || 1.0;
+  const invoiceRate = Number(inv.exchangeRate) || 1.0;
+  let fxGainLoss = 0;
+  if (inv.currency && inv.currency !== 'INR') {
+    // For payable: if exchange rate decreases, we pay less INR (Gain); if it increases, we pay more INR (Loss)
+    fxGainLoss = Math.round((invoiceRate - settlementRate) * amount * 100) / 100;
+  }
+
+  const payment = {
+    id: await db.nextId('pay', COL.payments),
+    purchaseInvoiceId: inv.id,
+    date: req.body.date ?? new Date().toISOString().slice(0, 10),
+    amount,
+    currency: inv.currency || 'INR',
+    settlementRate,
+    fxGainLoss,
+  };
+  await db.insert(TID, COL.payments, payment);
+
   const paid = (inv.paid ?? 0) + amount;
-  const updated = await db.update(TID, COL.purchases, inv.id, { paid, status: paid >= inv.total ? 'paid' : inv.status });
-  res.json(updated);
+  const totalFxGainLoss = ((inv.totalFxGainLoss ?? 0) + fxGainLoss);
+  const updated = await db.update(TID, COL.purchases, inv.id, { paid, status: paid >= inv.total ? 'paid' : inv.status, totalFxGainLoss });
+  res.json({ invoice: updated, payment, fxGainLoss });
 }));
 
 // Banking

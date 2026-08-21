@@ -72,11 +72,13 @@ import QCChecksPage from '@/pages/quality/Checks';
 import NonConformancesPage from '@/pages/quality/NonConformances';
 import UsersPage from '@/pages/admin/Users';
 import RolesPage from '@/pages/admin/Roles';
+import AssetsPage from '@/pages/assets/AssetsPage';
 
 const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
   owner: [
     'Finance & Accounts',
     'Accounting',
+    'Fixed Assets',
     'HRMS',
     'Inventory',
     'Operations',
@@ -94,6 +96,7 @@ const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
   admin: [
     'Finance & Accounts',
     'Accounting',
+    'Fixed Assets',
     'HRMS',
     'Inventory',
     'Operations',
@@ -111,6 +114,7 @@ const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
   finance: [
     'Finance & Accounts',
     'Accounting',
+    'Fixed Assets',
     'Procurement',
     'Compliance',
     'Document Management',
@@ -121,6 +125,7 @@ const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
   accountant: [
     'Finance & Accounts',
     'Accounting',
+    'Fixed Assets',
     'Procurement',
     'Compliance',
     'Document Management',
@@ -171,6 +176,7 @@ function useActiveNav(userRole?: string) {
       title: 'Accounting',
       items: [
         { label: 'Finance Dashboard', to: '/dashboard/finance', active: isActive('/dashboard/finance') },
+        { label: 'Fixed Assets', to: '/assets', active: isActive('/assets') },
         { label: 'Chart of accounts', to: '/accounting/chart-of-accounts', active: isActive('/accounting/chart-of-accounts') },
         { label: 'Journal entries', to: '/accounting/journal-entries', active: isActive('/accounting/journal-entries') },
         { label: 'Sales invoices', to: '/accounting/sales-invoices', active: isActive('/accounting/sales-invoices') },
@@ -287,6 +293,12 @@ function useActiveNav(userRole?: string) {
         { label: 'Inspection Plans', to: '/quality/inspection-plans', active: isActive('/quality/inspection-plans') },
         { label: 'QC Checks', to: '/quality/checks', active: isActive('/quality/checks') },
         { label: 'Non-Conformances', to: '/quality/non-conformances', active: isActive('/quality/non-conformances') },
+      ],
+    },
+    {
+      title: 'Fixed Assets',
+      items: [
+        { label: 'Asset Register', to: '/assets', active: isActive('/assets') },
       ],
     },
     {
@@ -813,6 +825,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin', 'owner']} userRole={user?.role}>
               <RolesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/assets"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant']} userRole={user?.role}>
+              <AssetsPage />
             </ProtectedRoute>
           }
         />

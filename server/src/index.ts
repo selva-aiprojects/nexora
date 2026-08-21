@@ -24,6 +24,8 @@ import { currenciesRouter as currenciesRoutes } from './modules/currencies.js';
 import { taxRouter as taxRoutes } from './modules/tax.js';
 import { approvalsRouter as approvalsRoutes } from './modules/approvals.js';
 import { importerRouter as importerRoutes } from './modules/importer.js';
+import { landedCostRouter as landedCostRoutes } from './modules/landed_cost.js';
+import { reorderRouter as reorderRoutes } from './modules/reorder.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 
@@ -68,6 +70,8 @@ app.use('/api/currencies', currenciesRoutes);
 app.use('/api/tax', taxRoutes);
 app.use('/api/approvals', approvalsRoutes);
 app.use('/api/importer', importerRoutes);
+app.use('/api/procurement/landed-costs', landedCostRoutes);
+app.use('/api/inventory/reorder', reorderRoutes);
 
 // 404 for unknown API routes
 app.use('/api', (_req, res) => {

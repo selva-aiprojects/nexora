@@ -76,6 +76,8 @@ import AssetsPage from '@/pages/assets/AssetsPage';
 import TaxConfigPage from '@/pages/finance/TaxConfigPage';
 import ApprovalsPage from '@/pages/finance/ApprovalsPage';
 import DataImporterPage from '@/pages/admin/DataImporterPage';
+import LandedCostPage from '@/pages/procurement/LandedCostPage';
+import ReorderPlanningPage from '@/pages/inventory/ReorderPlanningPage';
 
 const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
   owner: [
@@ -215,6 +217,7 @@ function useActiveNav(userRole?: string) {
       title: 'Inventory',
       items: [
         { label: 'Inventory Dashboard', to: '/dashboard/inventory', active: isActive('/dashboard/inventory') },
+        { label: 'Reorder Planning (ROP)', to: '/inventory/reorder', active: isActive('/inventory/reorder') },
         { label: 'Stock', to: '/inventory/stock', active: isActive('/inventory/stock') },
         { label: 'Warehouses', to: '/inventory/warehouses', active: isActive('/inventory/warehouses') },
         { label: 'Reports', to: '/inventory/reports', active: isActive('/inventory/reports') },
@@ -289,6 +292,7 @@ function useActiveNav(userRole?: string) {
         { label: 'Vendor Quotes', to: '/procurement/vendor-quotes', active: isActive('/procurement/vendor-quotes') },
         { label: 'Contracts', to: '/procurement/contracts', active: isActive('/procurement/contracts') },
         { label: 'Goods Receipts', to: '/procurement/grns', active: isActive('/procurement/grns') },
+        { label: 'Landed Costs', to: '/procurement/landed-costs', active: isActive('/procurement/landed-costs') },
       ],
     },
     {
@@ -884,6 +888,22 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin', 'owner', 'finance']} userRole={user?.role}>
               <DataImporterPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inventory/reorder"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance', 'accountant']} userRole={user?.role}>
+              <ReorderPlanningPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/procurement/landed-costs"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance', 'accountant']} userRole={user?.role}>
+              <LandedCostPage />
             </ProtectedRoute>
           }
         />

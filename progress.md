@@ -1,8 +1,32 @@
 # Nexora ERP — Progress Tracker
 
-## Current Status: v1.0.0 (Production Release — Vercel & PostgreSQL Cloud Live)
+## Current Status: v1.1.0 (Global ERP Expansion — Deployed to Vercel & PostgreSQL Cloud)
 
 ### ✅ Completed Milestones
+
+#### 1. Global Enterprise ERP Architecture (Phases 1, 2 & 3)
+- **Fixed Asset Management Subsystem (`/assets`)**:
+  - Full Asset Master Register across 6 asset categories (Machinery, Vehicles, IT Hardware, Buildings, Furniture, Tools).
+  - Straight-Line Method (SLM) & Written-Down Value (WDV) automated monthly depreciation calculation engines.
+  - One-click Batch Depreciation run posting double-entry journals to GL (`5800 - Depreciation Expense` and `1700 - Accumulated Depreciation`).
+  - Asset Disposal & Write-Off with gain/loss computation.
+  - Historical depreciation schedule drill-down modal per asset.
+- **Multi-Currency & Realized FX Accounting Engine (`/currencies`)**:
+  - Currency Exchange Rate Master supporting `INR`, `USD`, `EUR`, `GBP`, `AED`, `SGD`, `JPY`.
+  - Multi-currency Sales Invoices and Purchase Invoices with exchange rate locking.
+  - Realized FX Gain/Loss calculation on receipt/payment settlements: $(\text{Settlement Rate} - \text{Invoice Rate}) \times \text{Amount}$.
+- **Universal Multi-Jurisdiction Tax Engine (`/finance/tax`)**:
+  - Pre-configured international schemes: Indian GST (CGST/SGST/IGST), GCC 5% VAT, UK 20% VAT, EU VAT, US Sales Tax, and Tax-Exempt.
+  - Interactive Tax Calculator modal with line-item component tax breakdowns.
+  - Custom multi-component tax scheme builder with live toggle activations.
+- **Multi-Level Threshold-Based Approval Workflows (`/finance/approvals`)**:
+  - Amount-tier approval rules for Purchase Orders, Purchase Invoices, and Expense Claims ($<\text{₹50k}$, $\text{₹50k-5L}$, $>\text{₹5L}$).
+  - Sequential approval chains (`manager` $\to$ `finance` $\to$ `owner`).
+  - Visual approval progress bars and decision modals (Approve / Reject) with immutable audit logs.
+- **Universal Master Data Importer (`/admin/importer`)**:
+  - 4-step wizard: Entity Selection $\to$ CSV Upload $\to$ Row-by-Row Validation Preview $\to$ Database Commit.
+  - Supports Customers, Vendors, Inventory Items, Employees, and Fixed Assets.
+  - 1-click sample CSV template generator and error highlight panel.
 
 #### 1. Cloud & Serverless Infrastructure (Vercel + Neon PostgreSQL)
 - **Vercel Serverless Function**: API entry point at `/api/index.ts` mounting Express modular monolith with full path routing (`/api/*` and `/health`).

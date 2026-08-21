@@ -24,11 +24,17 @@ const USERS: User[] = [
   { id: 'usr_emp', tenantId: TENANT.id, name: 'Vikram Singh', email: 'vikram@acme.in', password: 'demo1234', role: 'employee', employeeId: 'emp_1001', module: 'ess' },
 ];
 
-async function init() {
-  await db.seed('platform_tenants', [TENANT]);
-  await db.seed('platform_users', USERS);
+let initPromise: Promise<void> | null = null;
+function ensureInit() {
+  if (!initPromise) {
+    initPromise = (async () => {
+      await db.seed('platform_tenants', [TENANT]);
+      await db.seed('platform_users', USERS);
+    })();
+  }
+  return initPromise;
 }
-init().catch(console.error);
+ensureInit().catch(console.error);
 
 /**
  * POST /api/auth/login
@@ -37,6 +43,7 @@ init().catch(console.error);
 router.post(
   '/login',
   asyncHandler(async (req, res) => {
+    await ensureInit();
     const { email, password } = req.body ?? {};
     if (!email || !password) throw ApiError.badRequest('email and password are required');
     const users = await db.collection('platform_users');

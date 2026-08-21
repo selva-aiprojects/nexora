@@ -19,9 +19,27 @@ export class PostgresStore implements Store {
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS "${t}" (
         id TEXT PRIMARY KEY,
-        "tenantId" TEXT NOT NULL,
+        "tenantId" TEXT NOT NULL DEFAULT '',
         data JSONB NOT NULL
       )
+    `);
+    await this.pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = '${t}' AND column_name = 'tenantId'
+        ) THEN
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = '${t}' AND column_name = 'tenant_id'
+          ) THEN
+            ALTER TABLE "${t}" RENAME COLUMN "tenant_id" TO "tenantId";
+          ELSE
+            ALTER TABLE "${t}" ADD COLUMN "tenantId" TEXT NOT NULL DEFAULT '';
+          END IF;
+        END IF;
+      END $$;
     `);
     this.initialized.add(name);
   }

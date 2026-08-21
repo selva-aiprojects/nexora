@@ -6,14 +6,10 @@ export class PostgresStore implements Store {
   private initialized = new Set<string>();
 
   constructor(connectionString: string) {
-    const url = new URL(connectionString);
+    const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
     this.pool = new Pool({
-      host: url.hostname,
-      port: parseInt(url.port) || 5432,
-      database: url.pathname.slice(1),
-      user: url.username,
-      password: url.password,
-      ssl: { rejectUnauthorized: false },
+      connectionString,
+      ssl: isLocalhost ? false : { rejectUnauthorized: false },
     });
   }
 
@@ -41,14 +37,17 @@ export class PostgresStore implements Store {
     await this.ensureTable(name);
     const t = name.replace(/[^a-zA-Z0-9_]/g, '_');
     for (const row of rows) {
+      const tenantId = row.tenantId ?? 'tenant-default';
+      const record = { tenantId, ...row };
       await this.pool.query(
         `INSERT INTO "${t}" (id, "tenantId", data) VALUES ($1, $2, $3::jsonb) ON CONFLICT (id) DO NOTHING`,
-        [row.id, row.tenantId ?? '', JSON.stringify(row)]
+        [record.id, tenantId, JSON.stringify(record)]
       );
     }
   }
 
   async nextId(prefix: string, name: string): Promise<string> {
+    await this.ensureTable(name);
     const t = name.replace(/[^a-zA-Z0-9_]/g, '_');
     const res = await this.pool.query(`SELECT COUNT(*) AS cnt FROM "${t}"`);
     const n = parseInt(res.rows[0].cnt, 10) + 1;
@@ -63,8 +62,10 @@ export class PostgresStore implements Store {
   }
 
   async byId(tenantId: string, name: string, id: string): Promise<any | undefined> {
-    const rows = await this.all(tenantId, name);
-    return rows.find((r: any) => r.id === id);
+    await this.ensureTable(name);
+    const t = name.replace(/[^a-zA-Z0-9_]/g, '_');
+    const res = await this.pool.query(`SELECT data FROM "${t}" WHERE id = $1 AND "tenantId" = $2`, [id, tenantId]);
+    return res.rows[0]?.data;
   }
 
   async insert(tenantId: string, name: string, row: any): Promise<any> {

@@ -93,20 +93,26 @@ class MemoryStore implements Store {
 }
 
 // Resolve which DB backend to use.
-// Priority: DB_IMPL env var > POSTGRES_URL > memory (safe default for Vercel serverless).
+// Priority: DB_IMPL env var > POSTGRES_URL / DATABASE_URL / Vercel Postgres env vars > memory.
 // SQLite is only enabled when DB_IMPL=sqlite is explicitly set (requires Node 22.5+ node:sqlite).
-const impl = process.env.DB_IMPL ?? (process.env.POSTGRES_URL ? 'postgres' : 'memory');
+const pgUrl =
+  process.env.POSTGRES_URL ||
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.POSTGRES_PRISMA_URL;
+
+const impl = process.env.DB_IMPL ?? (pgUrl ? 'postgres' : 'memory');
 let dbInstance: Store;
 
 if (impl === 'sqlite') {
   // Lazy-import so Vercel doesn't attempt to resolve node:sqlite at cold-start
   const { SqliteStore: Sqlite } = await import('./db.sqlite.js');
   dbInstance = new Sqlite(process.env.SQLITE_PATH ?? './data/nexora.db');
-} else if (impl === 'postgres' || process.env.POSTGRES_URL) {
-  if (!process.env.POSTGRES_URL) {
-    throw new Error('POSTGRES_URL is required when DB_IMPL=postgres');
+} else if (impl === 'postgres' || pgUrl) {
+  if (!pgUrl) {
+    throw new Error('POSTGRES_URL or DATABASE_URL is required when DB_IMPL=postgres');
   }
-  dbInstance = new PostgresStore(process.env.POSTGRES_URL);
+  dbInstance = new PostgresStore(pgUrl);
 } else {
   // Default: in-memory store (works everywhere, resets on each cold-start)
   dbInstance = new MemoryStore();

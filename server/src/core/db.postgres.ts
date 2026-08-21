@@ -69,8 +69,8 @@ export class PostgresStore implements Store {
     await this.ensureTable(name);
     const t = name.replace(/[^a-zA-Z0-9_]/g, '_');
     for (const row of rows) {
-      const tenantId = row.tenantId ?? 'tenant-default';
-      const record = { tenantId, ...row };
+      const tenantId = (row.tenantId && String(row.tenantId).trim() !== '') ? String(row.tenantId) : 'tenant-default';
+      const record = { ...row, tenantId };
       await this.pool.query(
         `INSERT INTO "${t}" (id, "tenantId", data) VALUES ($1, $2, $3::jsonb)
          ON CONFLICT (id) DO UPDATE SET "tenantId" = EXCLUDED."tenantId", data = EXCLUDED.data`,
@@ -90,25 +90,28 @@ export class PostgresStore implements Store {
   async all(tenantId: string, name: string): Promise<any[]> {
     await this.ensureTable(name);
     const t = name.replace(/[^a-zA-Z0-9_]/g, '_');
-    const res = await this.pool.query(`SELECT data FROM "${t}" WHERE "tenantId" = $1`, [tenantId]);
+    const tid = (tenantId && String(tenantId).trim() !== '') ? String(tenantId) : 'tenant-default';
+    const res = await this.pool.query(`SELECT data FROM "${t}" WHERE "tenantId" = $1`, [tid]);
     return res.rows.map((r: any) => r.data);
   }
 
   async byId(tenantId: string, name: string, id: string): Promise<any | undefined> {
     await this.ensureTable(name);
     const t = name.replace(/[^a-zA-Z0-9_]/g, '_');
-    const res = await this.pool.query(`SELECT data FROM "${t}" WHERE id = $1 AND "tenantId" = $2`, [id, tenantId]);
+    const tid = (tenantId && String(tenantId).trim() !== '') ? String(tenantId) : 'tenant-default';
+    const res = await this.pool.query(`SELECT data FROM "${t}" WHERE id = $1 AND "tenantId" = $2`, [id, tid]);
     return res.rows[0]?.data;
   }
 
   async insert(tenantId: string, name: string, row: any): Promise<any> {
     await this.ensureTable(name);
     const t = name.replace(/[^a-zA-Z0-9_]/g, '_');
-    const record = { ...row, tenantId };
+    const tid = (tenantId && String(tenantId).trim() !== '') ? String(tenantId) : (row.tenantId ?? 'tenant-default');
+    const record = { ...row, tenantId: tid };
     if (!record.id) record.id = await this.nextId('rec', name);
     await this.pool.query(
       `INSERT INTO "${t}" (id, "tenantId", data) VALUES ($1, $2, $3::jsonb)`,
-      [record.id, tenantId, JSON.stringify(record)]
+      [record.id, tid, JSON.stringify(record)]
     );
     return record;
   }

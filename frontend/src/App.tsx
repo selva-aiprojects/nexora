@@ -73,7 +73,87 @@ import NonConformancesPage from '@/pages/quality/NonConformances';
 import UsersPage from '@/pages/admin/Users';
 import RolesPage from '@/pages/admin/Roles';
 
-function useActiveNav() {
+const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
+  owner: [
+    'Finance & Accounts',
+    'Accounting',
+    'HRMS',
+    'Inventory',
+    'Operations',
+    'Manufacturing',
+    'Compliance',
+    'Document Management',
+    'Employee Self-Service',
+    'Artificial Intelligence',
+    'CRM',
+    'Procurement',
+    'Projects',
+    'Quality',
+    'Admin',
+  ],
+  admin: [
+    'Finance & Accounts',
+    'Accounting',
+    'HRMS',
+    'Inventory',
+    'Operations',
+    'Manufacturing',
+    'Compliance',
+    'Document Management',
+    'Employee Self-Service',
+    'Artificial Intelligence',
+    'CRM',
+    'Procurement',
+    'Projects',
+    'Quality',
+    'Admin',
+  ],
+  finance: [
+    'Finance & Accounts',
+    'Accounting',
+    'Procurement',
+    'Compliance',
+    'Document Management',
+    'Employee Self-Service',
+    'Artificial Intelligence',
+    'CRM',
+  ],
+  accountant: [
+    'Finance & Accounts',
+    'Accounting',
+    'Procurement',
+    'Compliance',
+    'Document Management',
+    'Employee Self-Service',
+    'Artificial Intelligence',
+  ],
+  hr: [
+    'HRMS',
+    'Compliance',
+    'Document Management',
+    'Employee Self-Service',
+    'Artificial Intelligence',
+  ],
+  manager: [
+    'Inventory',
+    'Manufacturing',
+    'Procurement',
+    'Quality',
+    'Projects',
+    'Operations',
+    'CRM',
+    'Document Management',
+    'Employee Self-Service',
+    'Artificial Intelligence',
+  ],
+  employee: [
+    'Employee Self-Service',
+    'Document Management',
+    'Artificial Intelligence',
+  ],
+};
+
+function useActiveNav(userRole?: string) {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
   const NAV: NavSection[] = [
@@ -217,80 +297,67 @@ function useActiveNav() {
       ],
     },
   ];
-  return NAV;
+
+  const roleKey = userRole || 'employee';
+  const allowedTitles: string[] = ROLE_ALLOWED_SECTIONS[roleKey] ?? ROLE_ALLOWED_SECTIONS.employee;
+  return NAV.filter((section) => allowedTitles.includes(section.title as string));
 }
 
-function DashboardScreen({ user, onUserLoaded }: { user: any; onUserLoaded?: (u: any) => void }) {
-  const [token, setToken] = React.useState<string | null>(getStoredToken());
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+function ProtectedRoute({
+  allowedRoles,
+  userRole,
+  children,
+}: {
+  allowedRoles: string[];
+  userRole?: string;
+  children: React.ReactNode;
+}) {
+  const isAllowed =
+    userRole === 'owner' ||
+    userRole === 'admin' ||
+    (userRole && allowedRoles.includes(userRole));
 
-  React.useEffect(() => {
-    let cancelled = false;
-
-    async function init() {
-      setLoading(true);
-      setError(null);
-      try {
-        if (!token) {
-          const res = await api.login('owner@acme.in', 'demo1234');
-          if (cancelled) return;
-          setToken(res.token);
-          setStoredToken(res.token);
-          onUserLoaded?.(res.user);
-        } else {
-          try {
-            const u = await api.me();
-            if (cancelled) return;
-            onUserLoaded?.(u);
-          } catch {
-            // Stale or expired token in browser, re-authenticate automatically
-            const res = await api.login('owner@acme.in', 'demo1234');
-            if (cancelled) return;
-            setToken(res.token);
-            setStoredToken(res.token);
-            onUserLoaded?.(res.user);
-          }
-        }
-      } catch (err: any) {
-        if (cancelled) return;
-        setError(err.message ?? 'Failed to load data');
-        setToken(null);
-        setStoredToken(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    init();
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
-
-  if (loading) {
+  if (!isAllowed) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-canvas">
-        <div className="text-sm text-ink-muted">Loading Nexora…</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-canvas">
-        <div className="space-y-3 text-center">
-          <p className="text-sm text-danger">{error}</p>
-          <Button size="sm" onClick={() => { setToken(null); setStoredToken(null); window.location.reload(); }}>
-            Retry login
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-8 text-center">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-danger/10 text-3xl text-danger">
+          🔒
+        </div>
+        <h2 className="font-display text-xl font-bold text-ink">Access Restricted</h2>
+        <p className="mt-2 max-w-md text-sm text-ink-muted">
+          Your role (<span className="font-semibold text-ink uppercase">{userRole || 'Guest'}</span>) does not have permission to view this module.
+        </p>
+        <div className="mt-6">
+          <Button variant="primary" size="sm" onClick={() => window.location.href = '/'}>
+            Return to Dashboard
           </Button>
         </div>
       </div>
     );
   }
 
-  if (user?.role === 'owner') {
+  return <>{children}</>;
+}
+
+function DashboardScreen({ user }: { user: any }) {
+  if (user?.role === 'owner' || user?.role === 'admin') {
     return <ModuleDashboardSlider />;
+  }
+
+  if (user?.role === 'finance' || user?.role === 'accountant') {
+    return <ModuleDashboard module="finance" />;
+  }
+
+  if (user?.role === 'hr') {
+    return <ModuleDashboard module="hrms" />;
+  }
+
+  if (user?.role === 'manager') {
+    return <ModuleDashboard module="manufacturing" />;
+  }
+
+  if (user?.role === 'employee') {
+    return <ESSHomePage />;
   }
 
   const userModule = user?.module || 'sales';
@@ -298,9 +365,9 @@ function DashboardScreen({ user, onUserLoaded }: { user: any; onUserLoaded?: (u:
 }
 
 function App() {
-  const NAV = useActiveNav();
   const [user, setUser] = React.useState<any>(null);
   const [authLoading, setAuthLoading] = React.useState(true);
+  const NAV = useActiveNav(user?.role);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -366,39 +433,235 @@ function App() {
       }
     >
       <Routes>
-        <Route path="/" element={<DashboardScreen user={user} onUserLoaded={setUser} />} />
-        <Route path="/dashboard" element={<DashboardScreen user={user} onUserLoaded={setUser} />} />
+        <Route path="/" element={<DashboardScreen user={user} />} />
+        <Route path="/dashboard" element={<DashboardScreen user={user} />} />
         <Route path="/dashboard/:module" element={<ModuleDashboardPage />} />
-        <Route path="/invoices" element={<SalesInvoices />} />
-        <Route path="/expenses" element={<PurchaseInvoices />} />
-        <Route path="/compliance" element={<ComplianceDeadlines />} />
-        <Route path="/compliance/deadlines" element={<ComplianceDeadlines />} />
-        <Route path="/compliance/filings" element={<ComplianceFilings />} />
-        <Route path="/inventory" element={<InventoryStockPage />} />
-        <Route path="/inventory/stock" element={<InventoryStockPage />} />
-        <Route path="/inventory/warehouses" element={<InventoryWarehousesPage />} />
-        <Route path="/inventory/reports" element={<InventoryReportsPage />} />
-        <Route path="/hrms" element={<EmployeesPage />} />
-        <Route path="/hrms/employees" element={<EmployeesPage />} />
-        <Route path="/hrms/attendance" element={<AttendancePage />} />
-        <Route path="/hrms/leave" element={<LeavePage />} />
-        <Route path="/hrms/payroll" element={<PayrollPage />} />
-        <Route path="/hrms/statutory" element={<StatutoryPage />} />
+        <Route
+          path="/invoices"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant', 'manager']} userRole={user?.role}>
+              <SalesInvoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expenses"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant', 'manager']} userRole={user?.role}>
+              <PurchaseInvoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compliance"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant', 'hr']} userRole={user?.role}>
+              <ComplianceDeadlines />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compliance/deadlines"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant', 'hr']} userRole={user?.role}>
+              <ComplianceDeadlines />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compliance/filings"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant', 'hr']} userRole={user?.role}>
+              <ComplianceFilings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inventory"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance', 'accountant']} userRole={user?.role}>
+              <InventoryStockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inventory/stock"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance', 'accountant']} userRole={user?.role}>
+              <InventoryStockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inventory/warehouses"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance', 'accountant']} userRole={user?.role}>
+              <InventoryWarehousesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inventory/reports"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance', 'accountant']} userRole={user?.role}>
+              <InventoryReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hrms"
+          element={
+            <ProtectedRoute allowedRoles={['hr']} userRole={user?.role}>
+              <EmployeesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hrms/employees"
+          element={
+            <ProtectedRoute allowedRoles={['hr']} userRole={user?.role}>
+              <EmployeesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hrms/attendance"
+          element={
+            <ProtectedRoute allowedRoles={['hr']} userRole={user?.role}>
+              <AttendancePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hrms/leave"
+          element={
+            <ProtectedRoute allowedRoles={['hr']} userRole={user?.role}>
+              <LeavePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hrms/payroll"
+          element={
+            <ProtectedRoute allowedRoles={['hr']} userRole={user?.role}>
+              <PayrollPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hrms/statutory"
+          element={
+            <ProtectedRoute allowedRoles={['hr']} userRole={user?.role}>
+              <StatutoryPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/documents" element={<DMSDocumentsPage />} />
         <Route path="/dms/documents" element={<DMSDocumentsPage />} />
-        <Route path="/manufacturing/items" element={<ManufacturingItemsPage />} />
-        <Route path="/manufacturing/stock" element={<ManufacturingStockPage />} />
-        <Route path="/manufacturing/procurement" element={<ManufacturingProcurementPage />} />
-        <Route path="/manufacturing/boms" element={<ManufacturingBomsPage />} />
-        <Route path="/manufacturing/production" element={<ManufacturingProductionPage />} />
-        <Route path="/manufacturing/reports" element={<ManufacturingReportsPage />} />
-        <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />
-        <Route path="/accounting/journal-entries" element={<JournalEntries />} />
-        <Route path="/accounting/sales-invoices" element={<SalesInvoices />} />
-        <Route path="/accounting/purchase-invoices" element={<PurchaseInvoices />} />
-        <Route path="/accounting/gst" element={<GSTReturns />} />
-        <Route path="/accounting/bank-accounts" element={<BankAccounts />} />
-        <Route path="/accounting/reports" element={<AccountingReports />} />
+        <Route
+          path="/manufacturing/items"
+          element={
+            <ProtectedRoute allowedRoles={['manager']} userRole={user?.role}>
+              <ManufacturingItemsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manufacturing/stock"
+          element={
+            <ProtectedRoute allowedRoles={['manager']} userRole={user?.role}>
+              <ManufacturingStockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manufacturing/procurement"
+          element={
+            <ProtectedRoute allowedRoles={['manager']} userRole={user?.role}>
+              <ManufacturingProcurementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manufacturing/boms"
+          element={
+            <ProtectedRoute allowedRoles={['manager']} userRole={user?.role}>
+              <ManufacturingBomsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manufacturing/production"
+          element={
+            <ProtectedRoute allowedRoles={['manager']} userRole={user?.role}>
+              <ManufacturingProductionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manufacturing/reports"
+          element={
+            <ProtectedRoute allowedRoles={['manager']} userRole={user?.role}>
+              <ManufacturingReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/chart-of-accounts"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant']} userRole={user?.role}>
+              <ChartOfAccounts />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/journal-entries"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant']} userRole={user?.role}>
+              <JournalEntries />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/sales-invoices"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant']} userRole={user?.role}>
+              <SalesInvoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/purchase-invoices"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant']} userRole={user?.role}>
+              <PurchaseInvoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/gst"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant']} userRole={user?.role}>
+              <GSTReturns />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bank-accounts"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant']} userRole={user?.role}>
+              <BankAccounts />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/reports"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant']} userRole={user?.role}>
+              <AccountingReports />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/ess/home" element={<ESSHomePage />} />
         <Route path="/ess/attendance" element={<ESSAttendancePage />} />
         <Route path="/ess/leave" element={<ESSLeavePage />} />
@@ -409,24 +672,150 @@ function App() {
         <Route path="/ai/anomalies" element={<AIAnomaliesPage />} />
         <Route path="/ai/recommendations" element={<AIRecommendationsPage />} />
         <Route path="/ai/invoice-processing" element={<AIInvoiceProcessingPage />} />
-        <Route path="/crm/customers" element={<CRMCustomersPage />} />
-        <Route path="/crm/leads" element={<CRMLeadsPage />} />
-        <Route path="/crm/quotes" element={<CRMQuotesPage />} />
-        <Route path="/crm/sales-orders" element={<CRMSalesOrdersPage />} />
-        <Route path="/procurement/vendors" element={<ProcurementVendorsPage />} />
-        <Route path="/procurement/vendor-quotes" element={<ProcurementVendorQuotesPage />} />
-        <Route path="/procurement/contracts" element={<ProcurementContractsPage />} />
-        <Route path="/procurement/grns" element={<ProcurementGRNsPage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/projects/wbs" element={<WBSItemsPage />} />
-        <Route path="/projects/time-entries" element={<ProjectTimeEntriesPage />} />
-        <Route path="/projects/budgets" element={<ProjectBudgetsPage />} />
-        <Route path="/projects/reports" element={<ProjectReportsPage />} />
-        <Route path="/quality/inspection-plans" element={<InspectionPlansPage />} />
-        <Route path="/quality/checks" element={<QCChecksPage />} />
-        <Route path="/quality/non-conformances" element={<NonConformancesPage />} />
-        <Route path="/admin/users" element={<UsersPage />} />
-        <Route path="/admin/roles" element={<RolesPage />} />
+        <Route
+          path="/crm/customers"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance']} userRole={user?.role}>
+              <CRMCustomersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/crm/leads"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance']} userRole={user?.role}>
+              <CRMLeadsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/crm/quotes"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance']} userRole={user?.role}>
+              <CRMQuotesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/crm/sales-orders"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance']} userRole={user?.role}>
+              <CRMSalesOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/procurement/vendors"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance', 'accountant']} userRole={user?.role}>
+              <ProcurementVendorsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/procurement/vendor-quotes"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance', 'accountant']} userRole={user?.role}>
+              <ProcurementVendorQuotesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/procurement/contracts"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance', 'accountant']} userRole={user?.role}>
+              <ProcurementContractsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/procurement/grns"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance', 'accountant']} userRole={user?.role}>
+              <ProcurementGRNsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance']} userRole={user?.role}>
+              <ProjectsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/wbs"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance']} userRole={user?.role}>
+              <WBSItemsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/time-entries"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance']} userRole={user?.role}>
+              <ProjectTimeEntriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/budgets"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance']} userRole={user?.role}>
+              <ProjectBudgetsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/reports"
+          element={
+            <ProtectedRoute allowedRoles={['manager', 'finance']} userRole={user?.role}>
+              <ProjectReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/quality/inspection-plans"
+          element={
+            <ProtectedRoute allowedRoles={['manager']} userRole={user?.role}>
+              <InspectionPlansPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/quality/checks"
+          element={
+            <ProtectedRoute allowedRoles={['manager']} userRole={user?.role}>
+              <QCChecksPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/quality/non-conformances"
+          element={
+            <ProtectedRoute allowedRoles={['manager']} userRole={user?.role}>
+              <NonConformancesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'owner']} userRole={user?.role}>
+              <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/roles"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'owner']} userRole={user?.role}>
+              <RolesPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </AppShell>
   );

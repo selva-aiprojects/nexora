@@ -21,6 +21,9 @@ import projectsRoutes from './modules/projects.js';
 import qualityRoutes from './modules/quality.js';
 import { assetsRouter as assetsRoutes } from './modules/assets.js';
 import { currenciesRouter as currenciesRoutes } from './modules/currencies.js';
+import { taxRouter as taxRoutes } from './modules/tax.js';
+import { approvalsRouter as approvalsRoutes } from './modules/approvals.js';
+import { importerRouter as importerRoutes } from './modules/importer.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 
@@ -62,6 +65,9 @@ app.use('/api/projects', projectsRoutes);
 app.use('/api/quality', qualityRoutes);
 app.use('/api/assets', assetsRoutes);
 app.use('/api/currencies', currenciesRoutes);
+app.use('/api/tax', taxRoutes);
+app.use('/api/approvals', approvalsRoutes);
+app.use('/api/importer', importerRoutes);
 
 // 404 for unknown API routes
 app.use('/api', (_req, res) => {

@@ -73,12 +73,17 @@ import NonConformancesPage from '@/pages/quality/NonConformances';
 import UsersPage from '@/pages/admin/Users';
 import RolesPage from '@/pages/admin/Roles';
 import AssetsPage from '@/pages/assets/AssetsPage';
+import TaxConfigPage from '@/pages/finance/TaxConfigPage';
+import ApprovalsPage from '@/pages/finance/ApprovalsPage';
+import DataImporterPage from '@/pages/admin/DataImporterPage';
 
 const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
   owner: [
     'Finance & Accounts',
     'Accounting',
     'Fixed Assets',
+    'Tax Configuration',
+    'Approval Workflows',
     'HRMS',
     'Inventory',
     'Operations',
@@ -97,6 +102,8 @@ const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
     'Finance & Accounts',
     'Accounting',
     'Fixed Assets',
+    'Tax Configuration',
+    'Approval Workflows',
     'HRMS',
     'Inventory',
     'Operations',
@@ -115,6 +122,8 @@ const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
     'Finance & Accounts',
     'Accounting',
     'Fixed Assets',
+    'Tax Configuration',
+    'Approval Workflows',
     'Procurement',
     'Compliance',
     'Document Management',
@@ -126,6 +135,8 @@ const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
     'Finance & Accounts',
     'Accounting',
     'Fixed Assets',
+    'Tax Configuration',
+    'Approval Workflows',
     'Procurement',
     'Compliance',
     'Document Management',
@@ -143,6 +154,7 @@ const ROLE_ALLOWED_SECTIONS: Record<string, string[]> = {
     'Inventory',
     'Manufacturing',
     'Procurement',
+    'Approval Workflows',
     'Quality',
     'Projects',
     'Operations',
@@ -177,6 +189,8 @@ function useActiveNav(userRole?: string) {
       items: [
         { label: 'Finance Dashboard', to: '/dashboard/finance', active: isActive('/dashboard/finance') },
         { label: 'Fixed Assets', to: '/assets', active: isActive('/assets') },
+        { label: 'Tax Configuration', to: '/finance/tax', active: isActive('/finance/tax') },
+        { label: 'Approval Workflows', to: '/finance/approvals', active: isActive('/finance/approvals') },
         { label: 'Chart of accounts', to: '/accounting/chart-of-accounts', active: isActive('/accounting/chart-of-accounts') },
         { label: 'Journal entries', to: '/accounting/journal-entries', active: isActive('/accounting/journal-entries') },
         { label: 'Sales invoices', to: '/accounting/sales-invoices', active: isActive('/accounting/sales-invoices') },
@@ -296,6 +310,18 @@ function useActiveNav(userRole?: string) {
       ],
     },
     {
+      title: 'Tax Configuration',
+      items: [
+        { label: 'Tax Schemes', to: '/finance/tax', active: isActive('/finance/tax') },
+      ],
+    },
+    {
+      title: 'Approval Workflows',
+      items: [
+        { label: 'Approval Requests', to: '/finance/approvals', active: isActive('/finance/approvals') },
+      ],
+    },
+    {
       title: 'Fixed Assets',
       items: [
         { label: 'Asset Register', to: '/assets', active: isActive('/assets') },
@@ -306,6 +332,7 @@ function useActiveNav(userRole?: string) {
       items: [
         { label: 'Users', to: '/admin/users', active: isActive('/admin/users') },
         { label: 'Roles & Permissions', to: '/admin/roles', active: isActive('/admin/roles') },
+        { label: 'Data Importer', to: '/admin/importer', active: isActive('/admin/importer') },
       ],
     },
   ];
@@ -833,6 +860,30 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['finance', 'accountant']} userRole={user?.role}>
               <AssetsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/tax"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant']} userRole={user?.role}>
+              <TaxConfigPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/approvals"
+          element={
+            <ProtectedRoute allowedRoles={['finance', 'accountant', 'manager']} userRole={user?.role}>
+              <ApprovalsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/importer"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'owner', 'finance']} userRole={user?.role}>
+              <DataImporterPage />
             </ProtectedRoute>
           }
         />

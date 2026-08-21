@@ -2005,6 +2005,67 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+
+  // Generic request passthrough (for new modules without dedicated methods)
+  request: <T = any>(path: string, options?: RequestInit) => request<T>(path, options),
+
+  // Tax Configuration
+  getTaxSchemes: (activeOnly?: boolean) =>
+    request<any>(`/tax/schemes${activeOnly ? '?active=true' : ''}`),
+
+  getTaxScheme: (id: string) => request<any>(`/tax/schemes/${encodeURIComponent(id)}`),
+
+  createTaxScheme: (body: { name: string; country: string; type: string; description?: string; components?: any[] }) =>
+    request<any>('/tax/schemes', { method: 'POST', body: JSON.stringify(body) }),
+
+  toggleTaxScheme: (id: string) =>
+    request<any>(`/tax/schemes/${encodeURIComponent(id)}/activate`, { method: 'PUT' }),
+
+  calculateTax: (body: { amount: number; schemeId: string }) =>
+    request<any>('/tax/calculate', { method: 'POST', body: JSON.stringify(body) }),
+
+  // Approval Workflows
+  getApprovalRules: (module?: string) =>
+    request<any>(`/approvals/rules${module ? `?module=${module}` : ''}`),
+
+  createApprovalRule: (body: any) =>
+    request<any>('/approvals/rules', { method: 'POST', body: JSON.stringify(body) }),
+
+  getApprovalRequests: (params?: { status?: string; module?: string; page?: number; pageSize?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.module) qs.set('module', params.module);
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.pageSize) qs.set('pageSize', String(params.pageSize));
+    const q = qs.toString();
+    return request<any>(`/approvals/requests${q ? `?${q}` : ''}`);
+  },
+
+  getPendingApprovals: () => request<any>('/approvals/pending'),
+
+  submitForApproval: (body: { module: string; recordId: string; recordRef: string; amount: number; description?: string; metadata?: any }) =>
+    request<any>('/approvals/submit', { method: 'POST', body: JSON.stringify(body) }),
+
+  approveRequest: (id: string, comments?: string) =>
+    request<any>(`/approvals/requests/${encodeURIComponent(id)}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ comments }),
+    }),
+
+  rejectRequest: (id: string, comments?: string) =>
+    request<any>(`/approvals/requests/${encodeURIComponent(id)}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ comments }),
+    }),
+
+  // Universal Data Importer
+  getImporterEntities: () => request<any>('/importer/entities'),
+
+  previewImport: (entity: string, rows: any[]) =>
+    request<any>('/importer/preview', { method: 'POST', body: JSON.stringify({ entity, rows }) }),
+
+  commitImport: (entity: string, rows: any[]) =>
+    request<any>('/importer/commit', { method: 'POST', body: JSON.stringify({ entity, rows }) }),
 };
 
 export interface Asset {

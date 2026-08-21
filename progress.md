@@ -1,133 +1,86 @@
 # Nexora ERP — Progress Tracker
 
-## Current Status: v1.2-beta
+## Current Status: v1.0.0 (Production Release — Vercel & PostgreSQL Cloud Live)
 
-### ✅ Completed
+### ✅ Completed Milestones
 
-#### Backend (Express + SQLite)
-- **Platform**: auth (JWT), audit logging, notifications, global search, dashboard KPIs + charts
-- **Accounting**: COA, journals, sales/purchase invoices, receipts/payments, GST returns, bank accounts, reports (aging, TB, P&L, BS)
-- **HRMS**: employees, departments, designations, grades, attendance, leave types/applications, payroll runs, payslips, statutory
-- **Manufacturing**: items, warehouses, stock, stock transfers, PRs, POs, GRs, BOMs, production orders, reports (ledger, valuation, shortage)
-- **Procurement (standalone)**: vendors, vendor quotes, contracts, GRNs
-- **Inventory (standalone)**: warehouses, bins, stock, adjustments, transfers, cycle counts, reports (valuation, movement, aging)
-- **CRM**: customers, contacts, leads, quotes, sales orders, quote-to-SO conversion
-- **Compliance**: categories, obligations, deadlines, filings, evidence
-- **DMS**: folders, documents, versions, shares
-- **ESS**: home, attendance, leave, expenses, payslips, documents
-- **AI**: copilot, insights, anomalies, recommendations, invoice OCR processing
-- **Project Accounting**: projects, WBS, time entries, budgets, project P&L reports
-- **Quality Control**: inspection plans, QC checks, non-conformances, severity tracking
-- **Theme system**: Intelligent Indigo palette, light/dark mode, module accents, brand gradients
-- **Module Dashboards**: per-module dashboard APIs (sales, finance, procurement, inventory, crm, hrms, manufacturing) with comprehensive KPIs matching industry ERP standards, enhanced charts (donut, multi-line, bar, area), and inline metrics tables
+#### 1. Cloud & Serverless Infrastructure (Vercel + Neon PostgreSQL)
+- **Vercel Serverless Function**: API entry point at `/api/index.ts` mounting Express modular monolith with full path routing (`/api/*` and `/health`).
+- **Neon Cloud Driver Pooler**: Integrated `@neondatabase/serverless` WebSocket/HTTP connection pooling to eliminate serverless TLS socket disconnects on Vercel Functions.
+- **Dynamic Database Seam**: Dual-engine persistence layer (`server/src/core/db.ts`) with automatic environment variable discovery (`POSTGRES_URL`, `DATABASE_URL`, `POSTGRES_URL_NON_POOLING`, `POSTGRES_PRISMA_URL`) and fallback to local SQLite / In-Memory.
+- **Automatic Schema Migration**: Built-in zero-downtime column migration (`ensureTable`) handling legacy PostgreSQL column constraints (`tenant_id` / `tenantid` $\to$ `"tenantId"`).
+- **Cold-Start Resilience**: Awaited seed initialization promises on authentication endpoints to prevent cold-start race conditions.
 
-#### Frontend (React + Vite + Tailwind)
-- **Routing**: react-router-dom with all module routes
-- **Components**: Button, Badge, Card, DataTable, FormField, Modal, Toast, AppShell, PageHeader, ConfirmDialog, ThemeToggle, FilterBar, TableToolbar
-- **Pages**: Dashboard (module-specific with slider for superadmin), Accounting (7), HRMS (5), Manufacturing (6), Inventory (3), Procurement (4), Projects (5), Quality (3), CRM (4), Compliance (2), DMS (1), ESS (5), AI (5)
-- **Charts**: Revenue trend, stock by warehouse, AR aging, status breakdown, donut charts, multi-line charts, bar charts, inline metrics tables (recharts)
-- **Theme**: CSS variables for Intelligent Indigo, dark mode toggle, brand gradient utilities, module accent colors
-- **Branding**: logo.png + Tagline.png in sidebar header, favicon.png
-- **Validation**: Zod schemas for sales invoices, purchase invoices, employees, customers, vendors, projects
-- **Filters**: Reusable FilterBar component with search, date range, amount range, status filter, saved presets
-- **Export**: CSV/Excel export utilities (xlsx, papaparse) — wired into TableToolbar
-- **Print**: Print CSS + window.print() wired into TableToolbar
-- **TableToolbar**: Unified toolbar with title, filters, export, print, bulk actions, extra actions
-- **DataTable enhancements**: visibleColumns prop, selectedIds support (wired in key pages)
-- **Greeting**: Time-based user greeting in header (Good morning/afternoon/evening, {name})
+#### 2. Authentication & Login Experience
+- **Dedicated Login Screen (`LoginPage.tsx`)**:
+  - 1-Click Demo Persona selectors for Owner (`owner@acme.in`), Finance Lead (`finance@acme.in`), HR Manager (`hr@acme.in`), and Employee (`vikram@acme.in`).
+  - Interactive password visibility toggle (Show/Hide).
+  - Clear, accessible error banner alerts.
+  - Branded left showcase panel highlighting AI Copilot and PostgreSQL engine features.
+- **Automatic Stale Token Recovery**: Catches expired or legacy browser tokens in `localStorage` and automatically issues fresh credentials without breaking the user experience.
+- **Sign Out Control**: Dedicated `Sign Out` button with active user role badge in the top navigation bar.
 
-### 🚧 In Progress
-- Applying TableToolbar + FilterBar to remaining pages (purchase invoices, customers, leads, etc.)
-- Dashboard customization widgets
-- Data import component (CSV/Excel mapping + preview)
+#### 3. Operational Command Center & 7-Module Dashboards
+- **Executive Command Center (`/`)**: Multi-module slider with carousel tabs and `← Prev` / `Next →` buttons for the Owner/Superadmin.
+- **7 Dedicated Module Dashboards**:
+  - `💼 Sales` (`/dashboard/sales`): Revenue, AOV, Conversion Rate, Open Quotes, Churn, Status Donut & Revenue Trends.
+  - `💰 Finance` (`/dashboard/finance`): Gross/Net Margins, 5-Bucket AR Aging, Cash Position, Cash Inflow vs. Outflow.
+  - `🛒 Procurement` (`/dashboard/procurement`): Active Contracts, Spend by Category, Avg Lead Time, Vendor Ratings.
+  - `📦 Inventory` (`/dashboard/inventory`): Stock Units, Turnover Rate, Stockout Risk, Warehouse Distribution.
+  - `🏭 Manufacturing` (`/dashboard/manufacturing`): OEE %, Completed Work Orders, Units Produced, Capacity Utilization.
+  - `🤝 CRM` (`/dashboard/crm`): Open Leads, Won Deals, Pipeline Funnel, CAC, Conversion Rate.
+  - `👥 HRMS` (`/dashboard/hrms`): Active Employees, Daily Attendance, Turnover Rate, Revenue/Employee, Department Donut.
+- **Direct Sidebar Links**: Each module in the left sidebar features a direct `Dashboard` shortcut.
 
-### 📋 Planned (Enhancements)
+#### 4. Backend Modular Monolith (11 Business Domains)
+- **Platform**: JWT auth, HMAC token signing, append-only immutable audit trail (`recordAudit()`), global search, notifications.
+- **Accounting**: Chart of Accounts, Journal Entries, Sales & Purchase Invoices, Payments/Receipts, GST Returns (GSTR-1, GSTR-3B), Banking, Balance Sheet, P&L, AR/AP Aging.
+- **HRMS**: Employees, Departments, Designations, Attendance, Leave Management, Monthly Payroll Run Engine, Payslips, Statutory deductions (PF, ESI, PT).
+- **Manufacturing**: Items, Warehouses, Stock Transfers, BOMs, Work Orders, Standard Cost Valuation, MRP Shortage Reports.
+- **Inventory**: Multi-Warehouse Bins, Stock Adjustments, Transfers, Cycle Counts, Valuation Reports.
+- **Procurement**: Vendor Master, Vendor Ratings, RFQs, Contracts, Goods Receipt Notes (GRN).
+- **CRM**: Customers, Contacts, Leads, Quotes, Sales Orders, Quote-to-SO Conversion.
+- **Projects**: Project Accounting, Work Breakdown Structure (WBS), Time Entries, Budgets, Project P&L.
+- **Quality Control**: Inspection Plans, QC Sampling Checks, Non-Conformance (NC) Logs, CAPA Tracking.
+- **Compliance**: Statutory Obligations, Deadline Calendar, Filings, Evidence Document Store.
+- **DMS**: Folder Hierarchies, Document Version Trees, Secure Sharing.
+- **ESS**: Mobile-friendly Employee Self-Service for Geo-Fenced Attendance, Leaves, Expense Claims, Payslips.
+- **AI Copilot**: Automated Invoice OCR Parsing, Rolling 90-day Financial Anomaly Detection, Cash Flow Forecasting.
+
+#### 5. Documentation & Architectural Governance
+- **Technical & Architecture Design Document**: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (Monolith architecture, PostgreSQL multi-tenancy, Vercel pipeline, Security matrix).
+- **Functional Flow Document**: [`docs/FUNCTIONAL_FLOW.md`](docs/FUNCTIONAL_FLOW.md) (O2C, P2P, Plan-to-Produce, Hire-to-Retire, Record-to-Report, Inspect-to-CAPA workflows).
+- **Upgrade Governance Skill**: [`.agents/skills/nexora-upgrade-guide/SKILL.md`](.agents/skills/nexora-upgrade-guide/SKILL.md) (Rules, database patterns, and testing protocols for future upgrades).
+
+---
+
+### 📋 Planned Future Enhancements
 
 | Priority | Category | Feature | Description |
-|----------|----------|---------|-------------|
-| **P1** | Data | Excel/CSV export | One-click export for all tables (xlsx/csv) |
-| **P1** | UX | Advanced filters | Date ranges, amount filters, multi-criteria search, saved filters |
-| **P2** | Module | Project Accounting | Projects, WBS, budgets, time tracking, project P&L, cost centers |
-| **P2** | Module | Quality Control | Inspection plans, QC checks, non-conformance, CAPA |
-| **P2** | UX | Print/PDF | Invoice print, report PDF download, print-friendly layouts |
-| **P3** | UX | Form validation | Zod schema validation, inline errors, cross-field validation |
-| **P3** | UX | Skeleton loaders | Replace generic loading states with module-specific skeletons |
-| **P3** | UX | Keyboard shortcuts | Ctrl+K search, Ctrl+N new record, Ctrl+S save, Ctrl+E export |
-| **P3** | UX | Drag & drop | Kanban boards for leads, tasks, production stages |
-| **P3** | UX | Bulk actions | Bulk approve, delete, export, assign across tables |
-| **P3** | UX | Inline editing | Edit table cells directly without opening forms |
-| **P3** | UX | Column customization | Show/hide, reorder, pin columns in data tables |
-| **P4** | UX | Dark mode refinements | Ensure all modules render correctly in dark mode |
-| **P4** | UX | Mobile responsiveness | Tablet/mobile layouts for ESS and common workflows |
-| **P4** | UX | Tour/onboarding | First-time user walkthrough, contextual help tooltips |
-| **P4** | UX | Undo/redo | Soft delete with undo, action history restoration |
-| **P4** | Data | Audit trail viewer | Visual timeline of record changes with diff view |
-| **P4** | Data | Data import | CSV/Excel import with mapping, validation, preview |
-| **P4** | Data | Saved reports | Custom report builder, scheduled email reports |
-| **P4** | Data | Dashboard customization | Drag-drop widgets, custom KPIs, saved dashboards |
-| **P4** | Data | Advanced charts | Pivot tables, heatmaps, funnel charts, waterfall charts |
-| **P5** | Security | Multi-tenancy | Tenant onboarding, subscription tiers, data isolation |
-| **P5** | Security | RBAC | Role/permission matrix, field-level security, approval hierarchies |
-| **P5** | Security | 2FA/MFA | TOTP, SMS, email OTP for privileged actions |
-| **P5** | Security | Password policies | Complexity, expiry, breach check, session management |
-| **P5** | Security | IP whitelisting | Restrict access by IP range for sensitive modules |
-| **P5** | Performance | Caching | Redis cache for frequent queries, session store |
-| **P5** | Performance | Pagination | Cursor-based pagination for large datasets |
-| **P5** | Performance | Query optimization | Indexed queries, connection pooling, lazy loading |
-| **P5** | Testing | Unit tests | Jest/Vitest for backend services and frontend components |
-| **P5** | Testing | Integration tests | API contract tests, E2E with Playwright |
-| **P5** | Testing | CI/CD | GitHub Actions for lint, test, build, deploy |
-| **P5** | DevOps | Docker | Multi-stage Dockerfiles, docker-compose for full stack |
-| **P5** | DevOps | Health checks | /health, /ready endpoints, monitoring dashboard |
-| **P5** | DevOps | Logging | Structured JSON logs, log rotation, error tracking |
-| **P5** | Integrations | Email | SMTP, templates, bulk mail, email tracking |
-| **P5** | Integrations | SMS | OTP, alerts, bulk SMS via Twilio/MSG91 |
-| **P5** | Integrations | Bank feeds | Auto-fetch transactions via Open Banking / IFSC APIs |
-| **P5** | Integrations | E-invoicing | IRN/QR generation, e-way bill API |
-| **P5** | Integrations | GSTN API | Auto-file GSTR-1/3B, fetch GSTIN details |
-| **P5** | Integrations | Biometric | Attendance via fingerprint/face recognition API |
-| **P5** | Integrations | Chatbot | WhatsApp/Slack bot for queries and approvals |
-| **P5** | Advanced | Workflow engine | Visual workflow builder, SLA timers, escalation |
-| **P5** | Advanced | Approval matrix | Multi-level approvals with delegation, parallel approvals |
-| **P5** | Advanced | Notification center | In-app, email, SMS, push notifications with preferences |
-| **P5** | Advanced | Localization | i18n for EN/HI/TA, multi-currency, regional formats |
-| **P5** | Advanced | Recurring transactions | Recurring invoices, journal entries, budgets |
-| **P5** | Advanced | Budgeting & Forecasting | Annual budgets, variance analysis, cash flow forecast |
-| **P5** | Advanced | Asset management | Fixed assets, depreciation, maintenance schedules |
-| **P5** | Advanced | Payroll enhancements | Attendance integration, salary advances, bonus calculations |
-| **P5** | Advanced | CRM enhancements | Email integration, campaign management, territory mapping |
-| **P5** | Advanced | Manufacturing enhancements | Shop floor display, machine scheduling, scrap tracking |
-| **P5** | Advanced | Inventory enhancements | Demand forecasting, reorder point automation, expiry tracking |
+| :--- | :--- | :--- | :--- |
+| **P1** | Integrations | GSTN & E-Invoicing | Direct GST portal API integration for GSTR-1/3B auto-filing & IRN QR generation. |
+| **P1** | Integrations | Open Banking Feeds | Automatic bank statement fetch via Account Aggregator / Open Banking APIs. |
+| **P2** | Mobile | Native PWA Shell | Offline-capable Progressive Web App for Mobile ESS and Shop Floor QC execution. |
+| **P2** | Workflow | Visual Workflow Builder | Custom drag-and-drop multi-stage approval matrix with SLA escalation timers. |
+| **P3** | Intelligence | Advanced LLM RAG | Vector search across enterprise DMS documents with conversational Copilot Q&A. |
+| **P3** | Performance | Redis Query Caching | Distributed query cache for high-frequency dashboard KPI endpoints. |
 
-### 🏗️ Architecture Decisions
-- **Backend**: Express + node:sqlite (file-based), JWT auth, role-based access
-- **Frontend**: React 19 + Vite + Tailwind CSS v4, react-router-dom
-- **State**: React hooks + Context (Toast, Theme)
-- **Data flow**: API client (`frontend/src/lib/api.ts`) typed against backend responses
-- **Styling**: Design tokens in CSS variables, mapped to Tailwind colors
-- **Module pattern**: Each backend module = Express router; each frontend module = pages/ folder
+---
 
-### 📊 Module Coverage
+### 📊 Module Coverage Summary
 
-| Domain | Backend | Frontend | Routes |
-|--------|---------|----------|--------|
-| Platform | ✅ | ✅ | /api/auth, /api/dashboard, /api/search, /api/notifications |
-| Accounting | ✅ | ✅ | /accounting/* |
-| HRMS | ✅ | ✅ | /hrms/* |
-| Manufacturing | ✅ | ✅ | /manufacturing/* |
-| Inventory | ✅ | ✅ | /inventory/* |
-| Procurement | ✅ | ✅ | /procurement/* |
-| Projects | ✅ | ✅ | /projects/* |
-| Quality | ✅ | ✅ | /quality/* |
-| CRM | ✅ | ✅ | /crm/* |
-| Compliance | ✅ | ✅ | /compliance/* |
-| DMS | ✅ | ✅ | /dms/* |
-| ESS | ✅ | ✅ | /ess/* |
-| AI | ✅ | ✅ | /ai/* |
-
-### 🎯 Next Milestone (v1.2)
-1. **Module dashboards** — Complete per-module dashboard pages with graphs (sales, finance, procurement, inventory, crm, hrms)
-2. **Superadmin slider** — Carousel to switch between module dashboards for owner role
-3. **User greeting** — Time-based greeting in header with user name
-4. **Apply TableToolbar to remaining pages** — Purchase invoices, customers, leads, sales orders, etc.
-5. **Data import** — CSV/Excel import with mapping and preview
+| Domain | Backend API | Frontend UI | Verified Live (Vercel) |
+| :--- | :---: | :---: | :---: |
+| **Platform / Auth** | ✅ | ✅ | ✅ |
+| **Sales & CRM** | ✅ | ✅ | ✅ |
+| **Accounting & GST** | ✅ | ✅ | ✅ |
+| **Procurement** | ✅ | ✅ | ✅ |
+| **Inventory** | ✅ | ✅ | ✅ |
+| **Manufacturing** | ✅ | ✅ | ✅ |
+| **HRMS & Payroll** | ✅ | ✅ | ✅ |
+| **Projects** | ✅ | ✅ | ✅ |
+| **Quality Control** | ✅ | ✅ | ✅ |
+| **Compliance** | ✅ | ✅ | ✅ |
+| **DMS** | ✅ | ✅ | ✅ |
+| **ESS Mobile** | ✅ | ✅ | ✅ |
+| **AI Copilot** | ✅ | ✅ | ✅ |

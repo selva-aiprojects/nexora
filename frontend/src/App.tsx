@@ -13,6 +13,7 @@ import { ThemeProvider } from '@/lib/theme';
 
 import ModuleDashboardSlider from '@/pages/dashboard/ModuleDashboardSlider';
 import ModuleDashboard from '@/pages/dashboard/ModuleDashboard';
+import LoginPage from '@/pages/auth/LoginPage';
 
 function ModuleDashboardPage() {
   const { module } = useParams<{ module: string }>();
@@ -299,12 +300,42 @@ function DashboardScreen({ user, onUserLoaded }: { user: any; onUserLoaded?: (u:
 function App() {
   const NAV = useActiveNav();
   const [user, setUser] = React.useState<any>(null);
+  const [authLoading, setAuthLoading] = React.useState(true);
 
   React.useEffect(() => {
     let cancelled = false;
-    api.me().then((u) => { if (!cancelled) setUser(u); }).catch(() => {});
+    const token = getStoredToken();
+    if (!token) {
+      setAuthLoading(false);
+      return;
+    }
+    api.me()
+      .then((u) => { if (!cancelled) setUser(u); })
+      .catch(() => {
+        if (!cancelled) setStoredToken(null);
+      })
+      .finally(() => {
+        if (!cancelled) setAuthLoading(false);
+      });
     return () => { cancelled = true; };
   }, []);
+
+  const handleLogout = () => {
+    setStoredToken(null);
+    setUser(null);
+  };
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
+        <div className="text-sm font-medium text-ink-muted">Loading Nexora Operating System…</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPage onLoginSuccess={(u) => setUser(u)} />;
+  }
 
   const greeting = user?.name
     ? `Good ${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, ${user.name.split(' ')[0]}`
@@ -321,8 +352,16 @@ function App() {
       sections={NAV}
       topBar={
         <div className="flex items-center justify-between gap-4">
-          <div className="text-sm text-ink-muted">{greeting}</div>
-          <ThemeToggle />
+          <div className="flex items-center gap-3 text-sm text-ink-muted">
+            <span className="font-semibold text-ink">{greeting}</span>
+            <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary capitalize">{user.role}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="secondary" size="sm" onClick={handleLogout}>
+              Sign Out
+            </Button>
+          </div>
         </div>
       }
     >

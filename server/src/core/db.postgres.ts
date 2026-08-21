@@ -40,18 +40,14 @@ export class PostgresStore implements Store {
     await this.pool.query(`
       DO $$
       BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
-          WHERE table_name = '${t}' AND column_name = 'tenantId'
-        ) THEN
-          IF EXISTS (
-            SELECT 1 FROM information_schema.columns 
-            WHERE table_name = '${t}' AND column_name = 'tenant_id'
-          ) THEN
-            ALTER TABLE "${t}" RENAME COLUMN "tenant_id" TO "tenantId";
-          ELSE
-            ALTER TABLE "${t}" ADD COLUMN "tenantId" TEXT NOT NULL DEFAULT '';
-          END IF;
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '${t}' AND column_name = 'tenantid') THEN
+          ALTER TABLE "${t}" ALTER COLUMN "tenantid" DROP NOT NULL;
+        END IF;
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '${t}' AND column_name = 'tenant_id') THEN
+          ALTER TABLE "${t}" ALTER COLUMN "tenant_id" DROP NOT NULL;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '${t}' AND column_name = 'tenantId') THEN
+          ALTER TABLE "${t}" ADD COLUMN "tenantId" TEXT NOT NULL DEFAULT '';
         END IF;
       END $$;
     `);

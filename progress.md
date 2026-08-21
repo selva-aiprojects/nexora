@@ -27,6 +27,13 @@
   - 4-step wizard: Entity Selection $\to$ CSV Upload $\to$ Row-by-Row Validation Preview $\to$ Database Commit.
   - Supports Customers, Vendors, Inventory Items, Employees, and Fixed Assets.
   - 1-click sample CSV template generator and error highlight panel.
+- **Landed Cost Allocation Engine (`/procurement/landed-costs`)**:
+  - Proportional cost capitalization across GRN items by Value or Quantity.
+  - Captures Freight, Customs Duties, Tariffs, Insurance, and Port Demurrage.
+  - Real-time unit valuation updates and stock posting with immutable audit logs.
+- **Dynamic Reorder Point (ROP) & Auto-Reorder Engine (`/inventory/reorder`)**:
+  - Formula: $ROP = (\text{Daily Demand} \times \text{Lead Time}) + \text{Safety Stock}$ with Economic Order Quantity (EOQ).
+  - Visual runout runway gauges, stockout risk alerts, and 1-click batch Purchase Requisition generation.
 
 #### 1. Cloud & Serverless Infrastructure (Vercel + Neon PostgreSQL)
 - **Vercel Serverless Function**: API entry point at `/api/index.ts` mounting Express modular monolith with full path routing (`/api/*` and `/health`).

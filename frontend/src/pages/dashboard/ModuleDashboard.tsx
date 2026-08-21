@@ -42,6 +42,11 @@ const MODULE_META: Record<string, { title: string; description: string; accent: 
     description: 'Workforce stability, hiring metrics, attendance, and training.',
     accent: 'var(--nx-danger)',
   },
+  manufacturing: {
+    title: 'Manufacturing & Operations',
+    description: 'OEE, production volume, capacity utilization, and scrap rates.',
+    accent: 'var(--nx-warning)',
+  },
 };
 
 function formatCurrency(value: number) {
@@ -205,6 +210,18 @@ export default function ModuleDashboard({ module }: { module: string }) {
             <KpiCard label="Revenue/Employee" value={formatCurrency(kpis.revenuePerEmployee ?? 0)} />
             <KpiCard label="Pending Leaves" value={String(kpis.pendingLeaves ?? 0)} />
             <KpiCard label="Training Completion" value={formatPercent(kpis.trainingCompletionRate ?? 0)} trend={8} suffix="%" />
+          </>
+        );
+      case 'manufacturing':
+        return (
+          <>
+            <KpiCard label="Production Orders" value={String(kpis.productionOrderCount ?? 0)} />
+            <KpiCard label="Completed Orders" value={String(kpis.completedOrders ?? 0)} />
+            <KpiCard label="Total Units Produced" value={String(kpis.totalUnits ?? 0)} />
+            <KpiCard label="OEE" value={formatPercent(kpis.oee ?? 0)} trend={3} suffix="%" />
+            <KpiCard label="Capacity Utilization" value={formatPercent(kpis.capacityUtilization ?? 0)} trend={5} suffix="%" />
+            <KpiCard label="Downtime" value={String(kpis.downtime ?? 0)} suffix=" hrs" />
+            <KpiCard label="Scrap Rate" value={formatPercent(kpis.scrapRate ?? 0)} trend={-1} suffix="%" />
           </>
         );
       default:

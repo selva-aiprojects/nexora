@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useParams } from 'react-router-dom';
 import {
   AppShell,
   Badge,
@@ -13,6 +13,11 @@ import { ThemeProvider } from '@/lib/theme';
 
 import ModuleDashboardSlider from '@/pages/dashboard/ModuleDashboardSlider';
 import ModuleDashboard from '@/pages/dashboard/ModuleDashboard';
+
+function ModuleDashboardPage() {
+  const { module } = useParams<{ module: string }>();
+  return <ModuleDashboard module={module || 'sales'} />;
+}
 import ChartOfAccounts from '@/pages/accounting/ChartOfAccounts';
 import JournalEntries from '@/pages/accounting/JournalEntries';
 import SalesInvoices from '@/pages/accounting/SalesInvoices';
@@ -74,7 +79,8 @@ function useActiveNav() {
     {
       title: 'Finance & Accounts',
       items: [
-        { label: 'Dashboard', to: '/', active: isActive('/') },
+        { label: 'Command Center', to: '/', active: isActive('/') },
+        { label: 'Sales Dashboard', to: '/dashboard/sales', active: isActive('/dashboard/sales') },
         { label: 'Sales Invoices', to: '/invoices', active: isActive('/invoices') },
         { label: 'Purchase Expenses', to: '/expenses', active: isActive('/expenses') },
         { label: 'GST & Compliance', to: '/compliance', active: isActive('/compliance'), badge: <Badge tone="info">3</Badge> },
@@ -83,6 +89,7 @@ function useActiveNav() {
     {
       title: 'Accounting',
       items: [
+        { label: 'Finance Dashboard', to: '/dashboard/finance', active: isActive('/dashboard/finance') },
         { label: 'Chart of accounts', to: '/accounting/chart-of-accounts', active: isActive('/accounting/chart-of-accounts') },
         { label: 'Journal entries', to: '/accounting/journal-entries', active: isActive('/accounting/journal-entries') },
         { label: 'Sales invoices', to: '/accounting/sales-invoices', active: isActive('/accounting/sales-invoices') },
@@ -95,6 +102,7 @@ function useActiveNav() {
     {
       title: 'HRMS',
       items: [
+        { label: 'HRMS Dashboard', to: '/dashboard/hrms', active: isActive('/dashboard/hrms') },
         { label: 'Employees', to: '/hrms/employees', active: isActive('/hrms/employees') },
         { label: 'Attendance', to: '/hrms/attendance', active: isActive('/hrms/attendance') },
         { label: 'Leave', to: '/hrms/leave', active: isActive('/hrms/leave') },
@@ -105,6 +113,7 @@ function useActiveNav() {
     {
       title: 'Inventory',
       items: [
+        { label: 'Inventory Dashboard', to: '/dashboard/inventory', active: isActive('/dashboard/inventory') },
         { label: 'Stock', to: '/inventory/stock', active: isActive('/inventory/stock') },
         { label: 'Warehouses', to: '/inventory/warehouses', active: isActive('/inventory/warehouses') },
         { label: 'Reports', to: '/inventory/reports', active: isActive('/inventory/reports') },
@@ -119,6 +128,7 @@ function useActiveNav() {
     {
       title: 'Manufacturing',
       items: [
+        { label: 'Manufacturing Dashboard', to: '/dashboard/manufacturing', active: isActive('/dashboard/manufacturing') },
         { label: 'Items', to: '/manufacturing/items', active: isActive('/manufacturing/items') },
         { label: 'Stock', to: '/manufacturing/stock', active: isActive('/manufacturing/stock') },
         { label: 'Procurement', to: '/manufacturing/procurement', active: isActive('/manufacturing/procurement') },
@@ -163,6 +173,7 @@ function useActiveNav() {
     {
       title: 'CRM',
       items: [
+        { label: 'CRM Dashboard', to: '/dashboard/crm', active: isActive('/dashboard/crm') },
         { label: 'Customers', to: '/crm/customers', active: isActive('/crm/customers') },
         { label: 'Leads', to: '/crm/leads', active: isActive('/crm/leads') },
         { label: 'Quotes', to: '/crm/quotes', active: isActive('/crm/quotes') },
@@ -172,6 +183,7 @@ function useActiveNav() {
     {
       title: 'Procurement',
       items: [
+        { label: 'Procurement Dashboard', to: '/dashboard/procurement', active: isActive('/dashboard/procurement') },
         { label: 'Vendors', to: '/procurement/vendors', active: isActive('/procurement/vendors') },
         { label: 'Vendor Quotes', to: '/procurement/vendor-quotes', active: isActive('/procurement/vendor-quotes') },
         { label: 'Contracts', to: '/procurement/contracts', active: isActive('/procurement/contracts') },
@@ -316,6 +328,8 @@ function App() {
     >
       <Routes>
         <Route path="/" element={<DashboardScreen user={user} onUserLoaded={setUser} />} />
+        <Route path="/dashboard" element={<DashboardScreen user={user} onUserLoaded={setUser} />} />
+        <Route path="/dashboard/:module" element={<ModuleDashboardPage />} />
         <Route path="/invoices" element={<SalesInvoices />} />
         <Route path="/expenses" element={<PurchaseInvoices />} />
         <Route path="/compliance" element={<ComplianceDeadlines />} />

@@ -207,7 +207,7 @@ function useActiveNav() {
   return NAV;
 }
 
-function DashboardScreen({ user }: { user: any }) {
+function DashboardScreen({ user, onUserLoaded }: { user: any; onUserLoaded?: (u: any) => void }) {
   const [token, setToken] = React.useState<string | null>(getStoredToken());
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -224,8 +224,20 @@ function DashboardScreen({ user }: { user: any }) {
           if (cancelled) return;
           setToken(res.token);
           setStoredToken(res.token);
+          onUserLoaded?.(res.user);
         } else {
-          await api.me();
+          try {
+            const u = await api.me();
+            if (cancelled) return;
+            onUserLoaded?.(u);
+          } catch {
+            // Stale or expired token in browser, re-authenticate automatically
+            const res = await api.login('owner@acme.in', 'demo1234');
+            if (cancelled) return;
+            setToken(res.token);
+            setStoredToken(res.token);
+            onUserLoaded?.(res.user);
+          }
         }
       } catch (err: any) {
         if (cancelled) return;
@@ -256,7 +268,7 @@ function DashboardScreen({ user }: { user: any }) {
       <div className="flex min-h-screen items-center justify-center bg-canvas">
         <div className="space-y-3 text-center">
           <p className="text-sm text-danger">{error}</p>
-          <Button size="sm" onClick={() => { setToken(null); setStoredToken(null); }}>
+          <Button size="sm" onClick={() => { setToken(null); setStoredToken(null); window.location.reload(); }}>
             Retry login
           </Button>
         </div>
@@ -303,7 +315,7 @@ function App() {
       }
     >
       <Routes>
-        <Route path="/" element={<DashboardScreen user={user} />} />
+        <Route path="/" element={<DashboardScreen user={user} onUserLoaded={setUser} />} />
         <Route path="/invoices" element={<SalesInvoices />} />
         <Route path="/expenses" element={<PurchaseInvoices />} />
         <Route path="/compliance" element={<ComplianceDeadlines />} />

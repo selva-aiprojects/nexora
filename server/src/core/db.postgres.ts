@@ -1,16 +1,30 @@
-import { Pool } from 'pg';
+import { Pool as PgPool } from 'pg';
+import { Pool as NeonPool } from '@neondatabase/serverless';
 import type { Store } from './db.js';
 
 export class PostgresStore implements Store {
-  private pool: Pool;
+  private pool: any;
   private initialized = new Set<string>();
 
   constructor(connectionString: string) {
     const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
-    this.pool = new Pool({
-      connectionString,
-      ssl: isLocalhost ? false : { rejectUnauthorized: false },
-    });
+    const isNeon = connectionString.includes('neon.tech') || connectionString.includes('vercel-storage');
+
+    if (isNeon) {
+      this.pool = new NeonPool({ connectionString });
+    } else {
+      this.pool = new PgPool({
+        connectionString,
+        ssl: isLocalhost ? false : { rejectUnauthorized: false },
+        max: 10,
+        idleTimeoutMillis: 10000,
+        connectionTimeoutMillis: 10000,
+      });
+      this.pool.on('error', (err: any) => {
+        // eslint-disable-next-line no-console
+        console.error('[pg-pool-error]', err);
+      });
+    }
   }
 
   private async ensureTable(name: string): Promise<void> {
